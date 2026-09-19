@@ -1,0 +1,982 @@
+================================================================================
+HevORT — Y-AXIS VIBRATION BASELINE (pre ALPS screw fix) + POST-FIX RESULT
+Session 19-20/08/2026 baseline. Post-fix comparison run 21/08/2026 — see
+RESULT below. Both predictions confirmed. Keep this file: the predictions were
+written BEFORE the measurement and both held, which is what makes the 204 Hz
+beam-torsion diagnosis trustworthy.
+================================================================================
+
+WHAT CHANGED SINCE BASELINE
+Loose screws found securing ALPS strain-gauge unit to Goliath water block.
+Hotend was perceptibly wobbly by hand. Screws now tightened.
+Question: which measured modes were caused by this, and which survive?
+
+TEST CONDITIONS — MUST MATCH EXACTLY OR COMPARISON IS INVALID
+  Accelerometer  LIS2DW, MB6HC toolboard, spi.cs3+spi.cs2
+  Position       NOZZLE (~70mm below X rail) — NOT extruder body
+  Orientation    M955 P0 C"spi.cs3+spi.cs2" I65
+  Shaper OFF     M593 P"none"
+  Acceleration   M201 X8000 Y8000        (0.82g — avoids ±2g clipping)
+  Speed          M203 X15000 Y15000      (250 mm/s cruise)
+  Toolhead X     X=200 (mid-span — 204Hz antinode, strongest signal)
+  Drive mode     D4 closed loop, all four. Verify M569 P70.0 .. P73.0
+                 individually before capturing.
+  Sweep          Y sweep 98 -> 293 at 250 mm/s
+  CAUTION        the file 1-Y98-293-0-none.csv on disk is NOT this baseline.
+                 Re-analysed 21/08/2026 it gives 197.4Hz (0.057) rms 0.234 — an
+                 exact match to the X=20 row of the X-position test below, not
+                 to the X=200 baseline. The three X=200 baseline captures were
+                 never saved; only the numbers below survive them.
+  Post-fix runs  post1/2/3-Y98-293-0-none.csv, via macros/is_recheck.g
+
+Z AXIS — DO NOT HOME WITH THE ACCELEROMETER FITTED
+  The LIS2DW sits AT THE NOZZLE, inside the ALPS load path. Z homing probes
+  THROUGH the nozzle, so G28 Z / G30 with the sensor on risks a crash and
+  corrupts the trigger height regardless. Do not home Z. Instead:
+
+    1. Establish REAL physical clearance first — jog the bed clear by eye.
+    2. G92 Z250      ; fake datum, marks Z homed so G1 X/Y are accepted
+    3. XY freely. NO Z MOVES AT ALL for the rest of the session.
+
+  G92 IS A LIE ABOUT POSITION and RRF will act on it in BOTH directions. With
+  M208 Z-10:300, a believed 250 leaves 50mm of accepted opening move and 260mm
+  of accepted closing move, neither related to where the bed actually is.
+  Verified 21/08/2026: homex.g/homey.g DO move Z (G1 H2 Z5 then Z-5) but the
+  pair is self-cancelling, so homing X and Y is safe given >5mm real clearance,
+  and the faked 250 survives homing intact.
+
+  AFTER the session: remove the accelerometer, THEN G28 (or at minimum G28 Z)
+  before anything probes, trams, meshes or prints. The Z datum is junk until
+  re-homed, and any heightmap applied against it is displaced bodily. M18 also
+  clears it — it drops the homed flags, which is a safe way to park.
+
+  Restore after: M201 X35000 Y35000 / M203 X30000 Y30000 / M593 P"zvd" F127 S0.05
+  NOTE S0.05 is the RRF 3.7.0-beta.3 DEFAULT, confirmed by the M593 report on
+  21/08/2026. config.g omits S and therefore runs 0.05. Do not "correct" it to
+  0.1 — the verified ring-down numbers below are 0.05 numbers.
+
+ANALYSIS METHOD
+  Sample rate 1607 Hz (read from CSV footer, do not assume)
+  Drop final row before parsing — it is "Rate NNNN, overflows N", not data
+  Columns: Sample,X,Y,Z  → Y column = machine Y at I65
+  Cruise window: samples 250:950
+  Detrend, Hanning window, rFFT, amplitude = |FFT|/n*4
+  Check clipping: count |a| >= 1.995 — ±2.000g is hard full scale at 14-bit
+  Baseline runs clipped 13-14 samples on Y; if clipping rises, amplitude
+  comparison is understated and invalid.
+
+BASELINE NUMBERS TO BEAT (nozzle, 250 mm/s, X=200, I1000, unshaped)
+  Y cruise rms         0.477 / 0.477 / 0.537 g   (3 runs)
+  204Hz band peak      218Hz(0.370) / 216Hz(0.369) / 211Hz(0.498)
+  312Hz                0.197
+  Y clipping           13-14 samples
+
+  Cross-axis during Y move @500mm/s (for reference):
+    215Hz  aX 0.294  aY 0.524  aZ 0.072
+    312Hz  aX 0.023  aY 0.310  aZ 0.086
+
+PREDICTIONS — STATED IN ADVANCE
+  312 Hz SHOULD LARGELY DISAPPEAR.
+    Evidence: collapsed 0.197 -> 0.032 (6x) when sensor moved from nozzle to
+    extruder body, i.e. above the probe mount. A 6x drop across that joint means
+    the compliance is below it — in the hotend/ALPS/water block stack.
+    Loose screws are exactly that. Expect large reduction.
+
+  204 Hz SHOULD SURVIVE.
+    Evidence 1: dropped only 1.8x across the same joint (0.370-0.498 -> 0.210),
+    matching pure lever-arm geometry. Sensor moved 70mm below rail to 40mm above;
+    predicted ratio 40/70 = 0.57, measured 0.42-0.61. Geometry, not a fix.
+    Evidence 2: X-position test, Y sweep at three toolhead positions —
+      X=20   197Hz (0.057)   rms 0.234
+      X=200  204Hz (0.222)   rms 0.312
+      X=380  216Hz (0.040)   rms 0.233
+    4-5x larger at mid-span, frequency held. Antinode centre, nodes at ends =
+    mode shape of the X beam (20x20x3mm 6063, pinned by Y carriages).
+    Diagnosis: first torsional mode, driven by toolhead CoM offset below the
+    tube shear centre. A loose hotend screw cannot produce a mid-span antinode.
+
+  IF 204 Hz ALSO DROPS SUBSTANTIALLY, the beam-torsion diagnosis is wrong.
+  Two prior hypotheses already failed this session (encoder calibration;
+  rail ball-pass). Do not assume — check.
+
+================================================================================
+RESULT — MEASURED 21/08/2026. BOTH PREDICTIONS CONFIRMED.
+================================================================================
+Conditions exactly as specified above. Cold (~23C), shaper off, D4 verified on
+all four drivers individually, 3 runs, via macros/is_recheck.g. Analysis per
+ANALYSIS METHOD; the script was validated FIRST by reproducing the X=20 row
+(197.4Hz / 0.057 / rms 0.234) to three significant figures.
+
+                     BASELINE (pre-fix)           POST-FIX                VERDICT
+  Y cruise rms       0.477 0.477 0.537 -> 0.497   0.497 0.523 0.464 -> 0.495   unchanged
+  ~204Hz amplitude   0.370 0.369 0.498 -> 0.412   0.418 0.402 0.228 -> 0.349   SURVIVES
+  ~204Hz frequency   218 216 211 Hz               213 216 211 Hz               held
+  ~312Hz             0.197 (single capture)       0.102 0.051 0.057 -> 0.070   ~3x DOWN
+  Y clipping         13-14 samples                9 / 4 / 4                    fell
+
+312 Hz — CONFIRMED LARGELY GONE. In runs 2 and 3 there is no distinct peak at
+all: the band maximum wandered to 294 and 303 Hz at ~0.05g, which is broadband
+floor, not a mode. Only run 1 retains a real line, 315Hz at 0.102. The loose
+ALPS screws WERE this mode, exactly as the 6x sensor-relocation collapse
+predicted.
+
+204 Hz — CONFIRMED SURVIVING. Means moved 0.412 -> 0.349, but the baseline
+spread alone was 0.369-0.498 and the post spread is 0.228-0.418. They overlap
+heavily; this is inside the ~15% scatter. THE BEAM-TORSION DIAGNOSIS STANDS. It
+remains a stiffness/geometry problem that shaping will not fix.
+
+VALIDITY: clipping FELL, so by the test above the comparison holds. Note the
+direction — clipping understates amplitude, so the baseline was understated
+slightly MORE than the post-fix runs. That makes the 312Hz reduction marginally
+larger than measured, not smaller, and means the 204Hz "no change" is if
+anything a touch optimistic.
+
+BOTTOM LINE: overall vibration is UNCHANGED, because 204 Hz dominates the energy
+and 204 Hz is untouched. The screw fix bought a clean probe load path, not a
+faster machine. The 600-700 mm/s ceiling is unmoved.
+
+INCIDENTAL: the 127Hz band sat at 126.3 / 126.2 / 126.2 Hz across all three
+runs. The top panel and the temporary slab have NOT moved the gantry mode, so
+M593 F127 is still correctly placed. Cold only — the hot check after the rail
+shim still stands.
+
+--------------------------------------------------------------------------------
+MODE SHAPE — THREE-POINT X TEST REPEATED 21/08/2026  (macros/is_xpos.g)
+--------------------------------------------------------------------------------
+Same conditions, 3 runs each, X=10 and X=390 (10mm inside each end of travel),
+combined with the X=200 set above. X homes to MIN = LEFT (homex.g, config.g:80).
+
+                       X=10 (left)   X=200 (mid)   X=390 (right)
+  Y cruise rms            0.366         0.495         0.228
+  ~204Hz amplitude        0.053         0.349         0.031
+  ~204Hz frequency      207-214 Hz    211-216 Hz    202-204 Hz
+
+  Band energy (mean of 3):
+    110-140 gantry        0.201         0.155         0.115
+    140-175               0.228         0.233         0.178
+    175-240 torsion       0.134         0.666         0.076
+    240-290               0.200         0.190         0.097
+    290-340               0.219         0.152         0.158
+    340-500               0.258         0.205         0.140
+
+The torsion band at mid-span is 5x the left end and 9x the right, and the peak
+frequency HELD at 202-216 Hz at every position. Frequency independent of
+position = structural mode, not forced. Antinode dead centre, nodes at both
+carriages. A far stronger confirmation of the first-torsional-mode diagnosis
+than the original 4-5x result.
+
+The ENDS ARE UNCHANGED from the pre-fix baseline — X=20 0.057 -> X=10 0.053,
+X=380 0.040 -> X=390 0.031. The screw fix did nothing at the nodes, which is
+correct: there is no torsional motion there to couple into.
+
+--------------------------------------------------------------------------------
+OPEN — LEFT/RIGHT ASYMMETRY. DO NOT SHIM ANYTHING OVER THIS YET.
+--------------------------------------------------------------------------------
+NEW as of 21/08/2026: overall rms is 0.366 at the left end vs 0.228 at the
+right, a factor of 1.6. The baseline X-position test was SYMMETRIC (0.234 vs
+0.233), so this appeared between the two sessions.
+
+It is NOT the torsion mode. It is Y-direction only — cross-axis rms during the
+same sweeps is essentially flat across the span:
+
+                    aX      aY      aZ
+    X=10 (held)    0.175   0.349   0.164
+    X=200          0.197   0.495   0.136
+    X=390          0.186   0.228   0.126
+
+The elevation sits in the 110-140Hz gantry band (0.201 vs 0.115, decreasing
+monotonically left to right — a DIFFERENT mode shape from the 204Hz torsion,
+which peaks at centre) plus broadband above 240Hz.
+
+RULED OUT: the temporary accelerometer lead. Re-run at X=10 with the lead held
+clear by hand (macros/is_x10_recheck.g) gave 0.355 0.341 0.351 -> 0.349 against
+0.366 dragging — only 12% of a 0.138 gap. A stationary control confirmed the
+reroute did not disturb the sensor mount (gravity vector identical to 0.4mg:
+Z +0.9814 -> +0.9818), though hand contact raised the stationary noise floor
+1.4mg -> 24mg, negligible against a 0.3g signal.
+
+SUSPECT AT THE TIME — THE UMBILICAL, unsupported at the time of measurement
+(TESTED 22/08/2026 AND LARGELY EXONERATED — SEE RETEST BELOW)
+(project.txt item 11 — anchor not built, Key-Bak Sidekick not yet arrived). The
+bundle carries the CPAP cable, BOTH water lines and the PTFE tube; it drapes to
+one side and its restoring force on the toolhead necessarily varies with X.
+That fits every feature: acts in Y, position-dependent and monotonic, broadband
+and low-frequency rather than a discrete mode, and it appeared only after the
+toolhead bundle was completed.
+
+Note the known geometry fault is on the RIGHT rail — the OPPOSITE end from the
+noisy one. No correlation, which is another reason not to treat this as a frame
+fault.
+
+RETEST 22/08/2026 — KEY-BAK MOUNT FITTED, UMBILICAL SUPPORTED
+--------------------------------------------------------------------------------
+macros/is_xpos.g re-run unchanged, extended to cover all three X positions in
+one continuous run (kb-x10/x200/x390-1..3 in sys/accelerometer/, plus a
+stationary control kb-static.csv). The 21/08 captures are archived in
+/home/trev/hevort_survey_data/accel_pre_keybak/. Sensor mount verified
+undisturbed between sessions: gravity vectors agree to 3.7mg / 0.11 degrees,
+so the comparison is valid.
+
+                    X=10 LEFT       X=200 MID       X=390 RIGHT
+  Y rms     pre     0.366 +-0.005   0.495 +-0.024   0.228 +-0.017
+            post    0.341 +-0.010   0.476 +-0.031   0.241 +-0.006
+                     -6.7%           -3.8%           +5.9%
+
+  127Hz     pre     0.136 +-0.023   0.096 +-0.014   0.074 +-0.008
+            post    0.080 +-0.009   0.083 +-0.007   0.046 +-0.010
+                    -41.4%          -13.5%          -38.2%
+
+  bb>240Hz  pre     0.464 +-0.028   0.379 +-0.007   0.312 +-0.045
+            post    0.440 +-0.033   0.358 +-0.005   0.272 +-0.008
+                     -5.3%           -5.7%          -12.7%
+
+  left/right rms    pre 1.61x (gap 0.138g)     post 1.41x (gap 0.100g)
+
+THE ASYMMETRY IS STRUCTURAL. The falsifier stated in advance above was "if it
+stays near 0.35 it is structural." Left rms is 0.341.
+
+Supporting the umbilical closed 0.025g of a 0.138g gap — 18% — and even that is
+not cleanly attributable. Mid-span fell by a similar 0.019g where no umbilical
+effect was predicted, so most of it is session-level drift. For scale, the 21/08
+lead-held control at X=10 was already 0.349; the post-Key-Bak 0.341 is within
+0.008g of it. The whole change is the size of the lead-handling artefact.
+
+The 127Hz gantry band DID drop hard — but at BOTH ends, -41% left and -38%
+right, and the left/right ratio barely moved, 1.84x -> 1.75x. That is a
+machine-wide gain consistent with taking the bundle's mass and drag off the
+moving gantry. It is real and worth keeping. It is NOT the asymmetry.
+
+The band that actually carries the asymmetry, broadband above 240Hz, did not
+respond at all. Its ratio got slightly WORSE, 1.49x -> 1.62x.
+
+NEXT SUSPECTS, left end specifically: left Y carriage bearing preload, left belt
+tension and idler path, left tower-to-rail joint. The known geometry fault is on
+the RIGHT rail, so this remains a separate problem. STILL DO NOT SHIM OVER IT.
+
+ALSO WORTH RE-CHECKING AFTER THE FIX — ALL CLOSED 21/08/2026
+  Wobble by hand — GONE.
+  G31 trigger height — RE-PROBED. Now P500 X0 Y0 Z-0.030 (slip gauge, +/-0.005).
+  The loose joint turned out NOT to be in the probe's VERTICAL load path: the
+  paper-feeler value was identical before and after tightening. It WAS in the
+  tilt path — loose screws doubled apparent rear-edge tilt, 0.203 -> 0.419mm.
+  See frame_survey_20260821.txt section 10.
+  bed.g tramming — P1/P2 probe points swapped to match M671, done 21/08.
+
+CONFIRMED SEPARATELY — NOT AFFECTED BY THIS FIX
+  127 Hz gantry bending mode. Measured 8 ways (ring-down across D2/D4,
+  I500/I1000, both axes) at 121-147 Hz. Resonance-lab plugin independently
+  gave X 128.6Hz / Y 120.8Hz. Shaper committed: M593 P"zvd" F127 S0.05
+  Verified: X ring-down rms 0.12 -> 0.08, 121Hz peak 0.14 -> 0.03,
+  accel clipping eliminated.
+
+BELT A/B AMPLITUDE ASYMMETRY — 22/08/2026
+--------------------------------------------------------------------------------
+Resonance-lab "Belt tension" plugin (60-180Hz sweep) flagged belts "97% similar,
+peaks 129/146Hz" but the capture was 6-36% clipped and the actual sweep rate
+(fitted ~3.2Hz/s) didn't match the requested 2Hz/s — the plugin result is not
+trustworthy. PF gauge (2.6/2.6) and Spectroid (120 / 120-123Hz) directly measure
+matched belt tension and are believed over the plugin.
+
+Replicated the plugin's excitation with plain G-code instead: on this CoreXY, a
+pure X or Y move drives BOTH belts (see homex.g), but a 45-degree diagonal move
+isolates one belt pair. dX=+dY drives only the X pair (70.0+71.0, back-right +
+front-left). dX=-dY drives only the Y pair (72.0+73.0, front-right + back-left).
+macros/is_diag.g runs 3 diagonal sweeps each way near centre at the same clean,
+non-clipping conditions as is_xpos.g. Zero clipping on all 6 captures.
+
+  Y rms   Diagonal A (X pair)   0.371 / 0.339 / 0.352  -> 0.354
+          Diagonal B (Y pair)   0.252 / 0.255 / 0.277  -> 0.261
+
+No overlap across 6 runs (A min 0.339 > B max 0.277) — a real ~35% gap, not
+scatter. Frequency itself does NOT show a real split: peaks wander 124.0-130.9Hz,
+within one 2.3Hz FFT bin of each other — same ~124-130Hz gantry mode already
+documented above, not two different modes as the plugin implied.
+
+NOT belt tension (already ruled out directly by gauge + Spectroid, and both
+diagonals excite the same mode frequency, not different ones). Reads as the two
+belt-drive load paths coupling into the gantry unevenly — a stiffness/coupling
+asymmetry between the X-pair path (back-right+front-left corners) and the Y-pair
+path (front-right+back-left corners).
+
+NOT yet linked to the left/right X-position asymmetry above. That test used a
+pure Y-sweep, which drives both belts together — a different axis of comparison,
+implicating different corners. Treat as a separate open structural finding until
+a test connects them directly.
+
+BOTH Y RAILS RETORQUED (LIGHTER) — 22/08/2026, RESOLVES MOST OF THE ABOVE
+--------------------------------------------------------------------------------
+Both Y rails backed off from original clamp torque and tested fully slack
+first (rail could slide) to confirm the direction was right — it was, see the
+diagA/diagB and X-position section above. That slack state is NOT what was
+measured below. Both rails were then RE-SECURED properly: screw-by-screw,
+with the carriage jogged up to sit right behind each screw in turn as an
+alignment reference while tightening, on both left and right rails, to stop
+the clamp-up from bowing the rail out of straight. Final state does NOT
+slide — snug and located — but by feel is nowhere near as tight as the
+original binding torque. No torque wrench used, so no number, only "snug,
+noticeably less than before" (see OPEN item below for the follow-up this
+implies).
+
+Closed-loop tracking-error telemetry (M569.5, driver Current Error, full-length
+slow Y traverse near vs far from each rail) showed NO localised bind on any of
+the four drives (70.0/71.0/72.0/73.0) at the final torque — reassuring that this
+is not just a slacker version of the original bound state.
+
+Full n=3 re-run of is_xpos.g + is_diag.g at the final (retorqued) state:
+
+             original         fully slack       final retorque      vs original
+  X=10       0.341 +-0.010    0.153 +-0.005      0.215 +-0.003        -37%
+  X=200      0.476 +-0.031    0.175 +-0.006      0.213 +-0.006        -55%
+  X=390      0.241 +-0.006    0.196 +-0.006      0.189 +-0.011        -22%
+  diagonal A 0.354 +-0.013    0.141 +-0.004      0.191 +-0.016        -46%
+  diagonal B 0.261 +-0.011    0.145 +-0.002      0.177 +-0.003        -32%
+
+DIAGONAL A/B ASYMMETRY — RESOLVED. Was a clean non-overlapping 1.36x gap
+(0.354 vs 0.261). Now 1.08x with overlapping spreads (0.169-0.204 vs
+0.173-0.179) — statistically gone. Consistent with the original hypothesis:
+the X-pair and Y-pair belt load paths were coupling into the gantry unevenly
+because one corner's joint was over-constrained, not because of a belt
+tension difference (already ruled out separately by gauge + Spectroid).
+
+LEFT/RIGHT X-POSITION ASYMMETRY — MOSTLY BUT NOT FULLY RESOLVED. Was 1.41x
+(0.341 vs 0.241), now 1.14x (0.215 vs 0.189). Real reduction, but the two
+spreads (0.212-0.219 vs 0.175-0.203) do not fully overlap, so a smaller
+residual left-end effect likely remains. Not worth shimming or chasing
+further right now — flag for a future revisit if it resurfaces.
+
+OPEN — both rails are now snug, located, and re-tightened using the carriage
+as an alignment jig, but to a torque set by feel with no torque wrench, and
+by feel it is noticeably lighter than the original. This resolved the ringing
+without reintroducing a detectable bind (closed-loop telemetry above), but
+the actual correct fix is still unknown: find out WHY the original torque was
+binding (bowed rail, hole misalignment) and correct that properly, and get an
+actual torque figure on this rail size/screw so re-checks aren't by feel.
+
+TORQUE SWEEP — 1Nm TRIED 23/08/2026, TOO TIGHT
+--------------------------------------------------------------------------------
+Wrench arrived (0-1Nm). Both rails torqued to 1Nm exactly (all screws), full
+n=3 re-run of is_xpos.g + is_diag.g at that spec:
+
+             original(bound)  fully slack   by-feel retorque(21/8)   1Nm spec
+  X=10        0.341+-0.010     0.153+-0.005   0.215+-0.003            0.318+-0.004
+  X=200       0.476+-0.031     0.175+-0.006   0.213+-0.006            0.322+-0.021
+  X=390       0.241+-0.006     0.196+-0.006   0.189+-0.011            0.221+-0.007
+  diagonal A  0.354+-0.013     0.141+-0.004   0.191+-0.016            0.317+-0.012
+  diagonal B  0.261+-0.011     0.145+-0.002   0.177+-0.003            0.247+-0.009
+
+  X10/X390 ratio    1.41x           0.78x          1.14x                1.44x
+  diagA/diagB ratio 1.36x           0.97x          1.08x                1.28x
+
+1Nm IS TOO TIGHT. It sits much closer to the original bound state than to the
+by-feel retorque that resolved the asymmetries, and on both asymmetry ratios
+it has gone BACKWARDS past the original unfixed machine (X10/X390 1.44x vs
+original 1.41x). Whatever screw/rail combination this is, correct clamping
+torque is well under 1Nm.
+
+RETRY 23/08/2026 — RETIGHTENED "BY FEEL" AGAIN, DID NOT REPRODUCE
+--------------------------------------------------------------------------------
+Rails loosened and retightened by feel a second time, same procedure as
+21/08. Result landed almost on top of the 1Nm result, not the good 21/08
+numbers:
+
+             by-feel(21/8)    1Nm(23/8)    by-feel retry(23/8)
+  X=10       0.215+-0.003     0.318+-0.003    0.310+-0.014
+  X=200      0.213+-0.006     0.322+-0.014    0.293+-0.007
+  X=390      0.189+-0.011     0.221+-0.007    0.216+-0.012
+  diagA      0.191+-0.016     0.317+-0.012    0.280+-0.009
+  diagB      0.177+-0.003     0.247+-0.009    0.220+-0.012
+  X10/X390   1.14x            1.44x           1.44x
+  diagA/diagB 1.08x           1.28x           1.27x
+
+CONCLUSION: "by feel" is NOT repeatable. Same person, same procedure, landed
+on the 1Nm-equivalent tight cluster this time instead of the good numbers. The
+21/08 result was likely a looser instance that happened to land in the sweet
+spot, not a reproducible technique. This is exactly why a numeric spec is
+needed — feel alone cannot get back to this state reliably.
+
+NEXT: use the wrench, do not rely on feel again. Try 0.5Nm, same full n=3
+sweep. The 21/08 by-feel numbers above (rms 0.19-0.22, both asymmetries
+resolved) remain the target to bracket toward — not the original, not 1Nm,
+and not this retry. Once a NUMBERED value that matches or beats those numbers
+is found, THAT becomes the permanent project spec (see project-long.txt
+IMMEDIATE NEXT STEPS item 16) — no more guessing, and no more assuming "more
+torque = more correct."
+
+WRENCH RANGE PROBLEM — 23/08/2026. The wrench's minimum is 1Nm. Rails have now
+been loosened to significantly below that just by feel, i.e. the actual sweet
+spot is BELOW what this wrench can measure at all. Do not conclude "poor
+quality rails" from this alone — MGN12H mounts on M3 screws, and M3-into-
+aluminium-extrusion is commonly spec'd well under 1Nm in general assembly
+guidance (often 0.4-0.8Nm, sometimes lower into a T-nut), specifically to
+avoid crushing the softer aluminium thread. Both rails needing sub-1Nm to stop
+ringing is equally consistent with "this is just the correct torque for this
+fastener/material and the wrench bought doesn't cover it" as with any rail
+defect — a one-off bad part would not normally affect both rails identically.
+NEXT: get a wrench/driver rated for the actual range in play (precision drivers
+for this kind of fastener commonly go down to ~0.05-0.3Nm), rather than
+concluding the hardware needs replacing on this evidence alone.
+
+METHOD WARNINGS LEARNED THE HARD WAY
+  - Single captures have ~15% run-to-run scatter. Three runs minimum before
+    trusting any modest effect. An apparent I1000->I500 improvement vanished
+    entirely once repeats were run.
+  - M569.1 with parameters DROPS DRIVERS TO OPEN LOOP. Re-home after, and
+    verify with M569 Pxx.0 (not M569.1, which reports PID but not mode).
+  - Resonance-lab plugin sweep is quantisation-limited above ~100Hz: at 80
+    steps/mm and its 60mm/s^2-per-Hz excitation, 135Hz = 2.2 microsteps of
+    commanded motion. Cannot usefully probe 204Hz. Use decel ring-down instead.
+
+WHERE THIS LEAVES INPUT SHAPING — 22/08/2026
+--------------------------------------------------------------------------------
+M593 P"zvd" F127 S0.05 remains CORRECT. The gantry mode landed at 123-131Hz in
+every capture taken today, across every hardware state tested (Key-Bak fitted,
+both rails fully slack, both rails retorqued) — the shaped frequency has not
+moved and does not need re-tuning off the back of any of today's work.
+
+What changed is how much is left for the shaper to cancel. Comparing this
+morning's post-Key-Bak baseline against the final retorqued state, mean across
+X=10/200/390:
+
+  127Hz band (what the shaper targets)      0.070 -> 0.036   -49%
+  204Hz torsion (shaping does NOT target)   0.170 -> 0.055   -68%  (-76% at
+                                                                     centre span)
+
+Shaping was already doing real work before today (see the ALPS-fix-era
+ring-down verification above: X rms 0.12->0.08, 121Hz peak 0.14->0.03) — the
+rail work does not replace that, it reduces what shaping has to deal with in
+the first place. The 204Hz figure is a pure bonus: that mode was never being
+shaped at all, so its drop is a genuine structural improvement from today's
+mechanical work alone.
+================================================================================
+
+PIVOT — 23/08/2026: THIS IS NOT A TORQUE-SPEC PROBLEM. IT'S RAIL OR FRAME
+GEOMETRY. STOP TORQUE SWEEPING.
+--------------------------------------------------------------------------------
+Full torque progression today, all n=3 except where marked:
+
+             original   1Nm      by-feel#2   by-feel#1   fully-slack  totally-loose
+  X=10        0.341     0.317     0.310       0.215        0.153        0.162+-0.000
+  X=200       0.476     0.322     0.293       0.213        0.175        0.146+-0.003
+  X=390       0.241     0.221     0.216       0.189         0.196       0.164+-0.004
+  diagA       0.354     0.317     0.280       0.191        0.141        0.132+-0.005
+  diagB       0.261     0.247     0.220       0.177        0.145        0.127+-0.009
+  X10/X390    1.41x     1.44x     1.44x       1.14x        0.78x        0.99x
+  diagA/diagB 1.36x     1.28x     1.27x       1.08x        0.97x        1.04x
+
+MONOTONIC, NO SWEET SPOT: every reduction in clamp force reduced vibration
+further, all the way to totally loose — which gave the best numbers of the
+entire day, better than the original 21/08 by-feel result. A genuine
+"too loose" joint should reintroduce play/rattle and vibration should turn
+back up at some point; it never does. This means any meaningful clamp force
+is injecting stress into the rail, not locating it — the signature of a
+straight part being forced against a mounting surface or hole pattern that
+is not true, not of "needs a lighter torque."
+
+"By feel" is also confirmed unreproducible (feel#1 good, feel#2 landed on the
+1Nm-bad cluster from the identical procedure) — expected if the real cause is
+geometric: there is no stress-free clamped position to feel for by hand.
+
+NEXT — DO NOT KEEP TORQUE SWEEPING. Diagnose rail vs frame directly: remove
+one Y rail, check its own straightness against a straightedge OFF the
+machine, unclamped. Straight rail -> the frame/mounting surface/hole pattern
+is the defect (shim, re-drill, or slot the holes for float, then a straight
+rail can go to full proper torque with no stress). Bowed rail with no
+clamping at all -> the rail itself is bad and needs replacing; no torque
+value fixes a part that is bent before it meets a screw. Item 16 in
+project-long.txt is superseded by this — a torque number cannot be specified
+correctly until this is answered.
+================================================================================
+
+CONNECTS TO frame_survey_20260821.txt — SAME MECHANISM, FOUND INDEPENDENTLY
+--------------------------------------------------------------------------------
+frame_survey_20260821.txt section 2 already identified and causally confirmed
+this exact effect via bed-mesh corner-twist (a completely different
+measurement, taken two days before this session): "the rail clamps to the
+frame member and the member deflects with clamping state." Retorquing the Y
+rail moved the twist metric by tens of microns same-day, no other work in
+between. That document's own plan — retorque, run input shaping, and use
+whatever number the ringing settles on as the shim-schedule reference torque —
+is the plan this session was executing. It assumed a settled number would be
+found. It won't be, per the PIVOT above: no non-zero torque avoids exciting
+this coupling. frame_survey_20260821.txt has been updated with today's result
+and the practical options going forward (accept a minimum locating torque as a
+characterised constant, same treatment as the X beam thermal bow already gets;
+or stiffen the joint itself so clamping stops deflecting the extrusion).
+Also still open in both documents: whether this is right-rail-specific
+(matching the existing shim fault, "do NOT shim the left rail") or general to
+both Y rail mounts — every torque test today adjusted both rails together.
+================================================================================
+
+RAILS REMOVED, CLEANED, PINNED AT EXTREME ENDS ONLY — 23/08/2026
+--------------------------------------------------------------------------------
+Both rails removed, checked for straightness (straight — both rail and
+extrusion individually), extrusions and seats cleaned, reinstalled with only
+the two extreme-end fasteners on each rail engaged, all intermediate fasteners
+left free. This is a direct test of the frame_survey mechanism: pinning only 2
+points per rail cannot force the rail to follow an imperfect intermediate
+surface/hole line, since 2 points always define a straight line.
+
+             totally-loose(prev best)   pinned-ends         clip
+  X=10        0.162                      0.172+-0.003        6-10 (UNDERSTATED)
+  X=200       0.146                      0.157+-0.005        2-4  (UNDERSTATED)
+  X=390       0.164                      0.220+-0.002        0    (clean, valid)
+  diagA       0.132                      0.136+-0.004        0
+  diagB       0.127                      0.156+-0.003        0
+  X10/X390    0.99x                      0.78x
+  diagA/diagB 1.04x                      0.87x
+
+X=10/X200 clipped (understated, not directly comparable as-is) but still land
+in the same ballpark as the best prior result. X=390 is CLEAN and got WORSE —
+a real, valid increase, 0.164 -> 0.220.
+
+READ: this is the first test today where the two rails were NOT adjusted
+identically together. Left/centre staying good while the right specifically
+got worse under an otherwise-shared treatment is consistent with there being
+TWO separate things: a general clamping-compliance effect (which end-pinning
+addresses, matching frame_survey's mechanism) and the right-rail-specific
+static fault already documented (frame_survey section 1a, "low at rear",
+shim-only-right). End-pinning may have removed enough of the general effect
+for the right-specific one to show through more clearly rather than being
+masked by the general over-tightening that dominated every earlier test.
+
+NOT CONFIRMED — single n=3 run, two of five positions clipped. Before acting
+on this: re-run with reduced test acceleration/speed to eliminate the X=10/
+X=200 clipping for a fully clean comparison, and ideally test each rail's
+end-pinning independently (one pinned, other at a known reference state) to
+directly confirm the right-side effect is rail-specific rather than a general
+end-pinning side-effect (e.g. an unsupported rail free-spanning between its
+two pin points is itself a plausible new vibration source, not yet ruled out).
+================================================================================
+
+RETEST AT REDUCED SPEED — 23/08/2026. RIGHT-SIDE EFFECT LIKELY AMPLITUDE-
+DEPENDENT, NOT RESOLVED BY THE PINNED-ENDS FIX.
+--------------------------------------------------------------------------------
+Test conditions reduced to eliminate the X=10/X=200 clipping above: M201
+X4000 Y4000 (0.41g, was 0.82g), M203/sweep F7500 (125mm/s, was 250mm/s).
+macros/is_xpos.g and is_diag.g permanently updated to these values (23/08).
+
+             pinned-ends @250mm/s        pinned-ends @125mm/s (this test)
+  X=10        0.172+-0.003 (clipped)      0.123+-0.008 (clean)
+  X=200       0.157+-0.005 (clipped)      0.128+-0.004 (clean)
+  X=390       0.220+-0.002 (CLEAN)        0.129+-0.005 (clean)
+  diagA       0.136+-0.004                0.091+-0.006
+  diagB       0.156+-0.003                0.096+-0.003
+  X10/X390    0.78x                       0.95x
+  diagA/diagB 0.87x                       0.94x
+
+At 125mm/s everything is symmetric and quiet - the best-looking result of the
+day on paper. BUT X=390 at 250mm/s was already clean/unclipped at 0.220, so
+its earlier elevation was NOT a clipping artefact - it genuinely dropped when
+the drive amplitude was reduced. Read: the right-side effect is most likely
+AMPLITUDE-DEPENDENT - present at real print-representative speed/accel,
+invisible at gentle test speed. A quiet result at 125mm/s does NOT mean the
+pinned-ends fix resolved the right-side issue; it may just mean this test
+condition is too gentle to excite it. Do not conclude "fixed" from this run.
+
+NEXT: find the drive level where the right-side divergence switches on, e.g.
+try ~175-190mm/s, an intermediate step. Needed to confirm the effect is real
+(not a one-off) and to characterise it properly without clipping.
+================================================================================
+
+180mm/s TRIED — EFFECT STILL ABSENT, ONSET IS A SHARP THRESHOLD NOT GRADUAL
+--------------------------------------------------------------------------------
+M201 X5760 Y5760 (0.59g), M203/sweep 180mm/s (F10800). macros/is_xpos.g and
+is_diag.g updated to these values (23/08, superseding the 125mm/s values two
+sections up).
+
+               125mm/s        180mm/s        250mm/s
+  X=10          0.123+-0.008   0.136+-0.002   0.172+-0.003 (clipped, understated)
+  X=200         0.128+-0.004   0.135+-0.002   0.157+-0.005 (clipped, understated)
+  X=390         0.129+-0.005   0.145+-0.002   0.220+-0.002 (CLEAN)
+  diagA         0.091+-0.006   0.113+-0.005   0.136+-0.004
+  diagB         0.096+-0.003   0.115+-0.006   0.156+-0.003
+  X10/X390      0.95x          0.94x          0.78x
+  diagA/diagB   0.94x          0.98x          0.87x
+
+X=390 barely moved 125->180mm/s (0.129->0.145, +12%), nowhere near its jump to
+0.220 at 250mm/s. Both asymmetry ratios stayed flat too. The onset is a SHARP
+THRESHOLD somewhere between 180 and 250mm/s, not a smooth, proportionally-
+growing resonance. A gradual structural ringing effect would be expected to
+show up earlier/more continuously across this range; a sudden jump only near
+the top looks more like a discrete mechanical event (backlash taking up,
+something making brief contact) than continuous forced vibration.
+
+NEXT: narrow further (e.g. 220mm/s) if the exact threshold matters, or treat
+"onset somewhere 180-250mm/s, right side only" as sufficient to act on already
+- Trev's call.
+================================================================================
+
+X=390 LOCALISED FRONT vs REAR — 23/08/2026. POINTS AT THE REAR.
+--------------------------------------------------------------------------------
+macros/is_x390_frontrear.g: original full speed/accel (M201 X8000 Y8000, M203
+X15000 Y15000), X=390 only, split into two short (~80mm) Y sweeps instead of
+the usual 195mm one - front (Y30-110) and rear (Y280-360), n=3 each. Short
+moves finish before the 1000-sample capture window ends, so these captures
+include post-move ring-down, not pure cruise - not directly comparable in
+absolute terms to the full-sweep numbers elsewhere in this file, but front vs
+rear WITHIN this test is valid.
+
+Both aY segments clipped (front 3/2/2 samples, rear 3/1/1) - MORE than the
+full 195mm sweep clipped at the SAME drive settings (which was clean, 0 clips).
+Short sharp bursts hit the acceleration ramp harder than smooth cruise -
+consistent with the 180/250mm/s threshold finding above being a response to
+an impulsive/transient event, not continuous forced vibration.
+
+aY (Y rms) itself is compromised by clipping in both segments, not a clean
+comparison as-is. aX (cross-axis coupling during a PURE Y move) is completely
+CLEAN in both segments, zero clipping, and unambiguous:
+
+  aX rms    front 0.102+-0.006     rear 0.179+-0.022     ratio 1.76x
+
+A clean Y move should not excite much X motion if the joint is rigid. 1.76x
+more X cross-talk specifically at the rear is the signature of a loose/under-
+constrained joint concentrated there. This is the SAME location as the
+already-documented static fault (frame_survey_20260821.txt 1a: right Y rail
+low at rear, ~0.5mm) - two independent measurements, a static height survey
+and today's dynamic cross-axis coupling, now point at the same physical spot
+on the same rail. Read as a real convergence, not coincidence.
+
+NOT YET DONE: a clean aY (not just aX) front-vs-rear comparison, since both
+segments clipped there. Rerun this same front/rear split at reduced drive
+(180mm/s settings) to get that once ring-down/clipping methodology is
+resolved.
+================================================================================
+
+X=390 FRONT vs REAR RERUN AT 180mm/s — 23/08/2026. CLEAN, CONFIRMS AND REFINES
+--------------------------------------------------------------------------------
+Same is_x390_frontrear.g, updated to the 180mm/s settings (M201 X5760 Y5760,
+M203/sweep 180mm/s). ZERO clipping in either segment this time - fully clean
+comparison, unlike the 250mm/s version above.
+
+             front (Y30-110)   rear (Y280-360)   ratio
+  aY rms      0.273+-0.001      0.274+-0.007      1.00x  (flat - matches the
+                                                            180mm/s combined-
+                                                            sweep finding above)
+  aX rms      0.136+-0.003      0.157+-0.010      1.15x  (was 1.76x @250mm/s)
+  127Hz band  0.024+-0.002      0.055+-0.003      2.25x  (clean at both, tight)
+
+READ: the rear-specific signature is NOT a 250mm/s-only artefact - it is
+present across the speed range tested, just small at 180mm/s and only comes
+to dominate the overall aY rms above the ~180-250mm/s threshold found earlier.
+This is consistent with a genuinely loose/under-constrained joint AT THE REAR
+whose effect scales with drive energy rather than switching on suddenly - the
+aggregate rms hides it at low speed because other content (the 204/312Hz
+bands, broadband) dominates the sum until drive energy is high enough for the
+rear coupling to take over.
+
+NOTABLE: the 127Hz band specifically - the one input shaping targets - shows
+a real, clean 2.25x rear/front difference even at this low, non-threshold
+speed. This is the clearest, cleanest single number pointing at the rear as
+the location, independent of the amplitude-dependence question entirely.
+
+CONCLUSION SO FAR: rear of the right Y rail, matching frame_survey's static
+shim fault, confirmed by THREE independent signals now: static height survey,
+250mm/s dynamic aX cross-coupling, and 180mm/s clean 127Hz band. This is
+where physical attention should go next - inspect/address the right rail's
+rear mounting specifically, rather than more speed-threshold characterisation.
+================================================================================
+
+TARGETED FIX TRIED — MIDDLE OF BOTH RAILS PINNED, REAR-RIGHT FASTENER
+SPECIFICALLY SLACKENED — 23/08/2026. PARTIAL IMPROVEMENT, NOT RESOLVED.
+--------------------------------------------------------------------------------
+Direct response to the localisation above: pinned the middle of both rails
+(addresses the general clamp-deflection mechanism) and slackened specifically
+the rear-right fastener (the exact location three signals converged on).
+Full n=3 sweep + X=390 front/rear split, both at original full speed.
+
+FULL SWEEP: zero clipping everywhere this time (previously X=10/X=200 clipped
+under the pinned-ends-only condition) - itself a sign of a real change.
+  X=10 0.142  X=200 0.220  X=390 0.210  diagA 0.145  diagB 0.136
+X=10 is among the best of the whole day. X=390 barely moved from its previous
+clean 0.220 reading. X=200's rise vs the previous (clipped, understated) 0.157
+may just be revealing a true value that was previously masked by clipping,
+not a new regression - not confirmed either way.
+
+FRONT/REAR SPLIT (the decisive test - this is what the intervention targeted):
+             before slacken   after slacken    change
+  aX ratio    1.76x            1.20x           real reduction
+  127Hz ratio 2.25x            1.71x           real reduction
+  127Hz rear scatter: [0.031, 0.073, 0.096] - 3x wider spread than front
+  [0.029, 0.038, 0.050], and wider than the rear's own scatter before this
+  change (was tight, 0.051-0.057 range).
+
+READ: the rear signature shrank, did not resolve. Both clean signals moved in
+the right direction (~30% and ~25% closer to parity respectively) but neither
+reached 1.0x. The increased run-to-run scatter at the rear specifically is
+consistent with everything else found today about slackening vs the actual
+defect: backing off a fastener trades stress for repeatability, it does not
+fix an underlying geometric mismatch. This reads as confirmation the rear-
+right location is real and causally connected (slackening it measurably moved
+both signals) rather than a full fix - the joint is now less stressed but
+still not properly located there.
+
+NEXT: this is now well-localised and causally confirmed. The actual fix is
+almost certainly geometric correction at the rear-right mount (shim to correct
+the ~0.5mm low-at-rear static fault already on record, not further slackening)
+so the joint can go back to a normal torque without either binding or being
+loose - the same logic as the frame_survey shim schedule that has been on hold
+this whole investigation, now with strong evidence for exactly where and why.
+================================================================================
+
+FURTHER RETEST AFTER ANOTHER ADJUSTMENT — 23/08/2026 ("try now")
+--------------------------------------------------------------------------------
+Front/rear split rerun after a further unspecified adjustment near Y0.
+
+  aX ratio (clean, trustworthy):    1.11x   (was 1.20x, 1.76x originally -
+                                              continued improvement)
+  127Hz ratio: 2.53x reported, but front segment picked up clipping it didn't
+  have before (3/3/3 samples) - clipping understates the aY-derived 127Hz
+  reading, so this number is UNTRUSTED, not necessarily a real regression.
+
+aX remains the reliable signal and it continues closing toward parity. 127Hz
+band needs a clean (non-clipped) rerun, e.g. at reduced speed, before reading
+anything into its apparent increase.
+================================================================================
+
+REAR-RIGHT SHIMMED 0.5mm (SLIP GAUGE, TEMPORARY) — 23/08/2026. LOCALISED
+DEFECT CONFIRMED FIXED. A SEPARATE, MORE GENERAL RIGHT-SIDE EFFECT REMAINS.
+--------------------------------------------------------------------------------
+Rail pinned front and back, rear-right fastener specifically shimmed 0.5mm
+with a slip gauge (correcting the static "low at rear" fault - permanent shim
+stock not yet in hand). Two tests, both fully clean, zero clipping throughout:
+
+FRONT/REAR LOCALISED TEST (180mm/s, the test that actually reaches the rear
+corner, Y280-360):
+                    before shim   after shim
+  aY ratio            1.00x         0.98x     (was already flat)
+  127Hz ratio         1.71-2.53x    0.63x     (REVERSED - rear now quieter)
+  aX ratio            1.11-1.20x    1.08x     (near parity, was 1.76x original)
+
+The 127Hz band flipping from rear-louder to rear-QUIETER is the clearest
+possible confirmation: the shim is a real, working fix for the specific
+defect three independent signals converged on. Fully clean data, n=3, no
+clipping - this is a solid result, not a marginal one.
+
+FULL X-POSITION SWEEP (250mm/s, Y98-293 - does NOT reach the rear corner,
+Y280-360, that was shimmed):
+  X=10 0.147   X=200 0.210   X=390 0.229   diagA 0.154   diagB 0.127
+  X10/X390 ratio 0.64x (was 0.68x pre-shim - essentially unchanged)
+  diagA/diagB ratio 1.21x (was 1.07x pre-shim - slightly worse)
+
+READ: these two results are NOT a contradiction. They probe different
+regions - the shim fixed the rear corner cleanly (confirmed by the test that
+actually reaches it), but the standard mid-travel sweep never gets near that
+corner and shows an asymmetry that is essentially unchanged by the fix. This
+means there is a SEPARATE, more general right-side effect present across the
+middle of the Y travel that has nothing to do with the specific rear defect
+just corrected - most likely the general clamp-deflection mechanism
+(frame_survey section 2) still acting at other points along the right rail's
+length, now that the one worst/most localised contributor has been removed.
+
+NEXT: the rear corner is done (pending permanent shim stock to make it
+durable - it is currently a slip gauge, not a fitted part). The general
+right-side effect visible in the standard sweep is a separate, still-open
+problem. Consider running a front/rear-style split test at OTHER points along
+the right rail's length (not just the two extremes) to find whether the
+remaining effect is also localised somewhere specific, or is genuinely spread
+along the whole rail (which would point back to torque/clamp-deflection
+rather than another point defect).
+================================================================================
+
+MIDDLE OF X=390 TESTED — 23/08/2026. NO LOCALISED SPIKE, LOOKS DISTRIBUTED.
+--------------------------------------------------------------------------------
+macros/is_x390_middle.g: same 180mm/s conditions as is_x390_frontrear.g, same
+80mm segment length, centred on Y155-235 (middle of Y travel). Zero clipping,
+n=3, directly comparable to the front/rear numbers from the post-shim retest.
+
+           front(180)   middle(180)   rear(180, post-shim)
+  aY        0.271         0.258         0.267    - flat, 5% spread, noise-level
+  127Hz     0.043         0.026         0.027    - middle groups WITH rear,
+                                                    both below front
+  aX        0.124         0.138         0.133    - middle slightly highest,
+                                                    not dramatically
+
+READ: no middle-specific spike. This argues AGAINST a second discrete point
+defect and FOR the remaining right-side effect being a general, roughly
+uniform property along the whole rail's length - consistent with
+frame_survey's general clamp-deflection mechanism (present wherever the rail
+clamps, not concentrated at one spot) rather than a new localised fault to
+find and shim.
+
+CAVEAT: this was run at 180mm/s, below the threshold where the general
+right-side effect was most visible in the standard sweep (250mm/s). To fully
+confirm "distributed, not localised" holds at the speed where it actually
+matters, repeat front/middle/rear at 250mm/s - accept clipping if it occurs,
+same as the earlier 250mm/s front/rear run.
+
+PRACTICAL READ: if this is genuinely distributed clamp-deflection rather than
+a point defect, it is NOT something a second shim will fix. It points back to
+the still-unresolved question from earlier today - is this general effect
+right-rail-specific or common to both rails, and does it need the same
+"pin more of the rail, reduce clamping stress generally" approach that helped
+earlier, rather than another targeted shim.
+================================================================================
+
+FRONT/MIDDLE/REAR RETESTED AT 250mm/s — 23/08/2026. aX CONFIRMS DISTRIBUTED.
+127Hz AT FULL SPEED IS GENUINELY UNRESOLVED (clipping confound).
+--------------------------------------------------------------------------------
+Same three segments, is_x390_frontrear.g + is_x390_middle.g switched back to
+250mm/s. All three segments picked up SOME clipping this time (front worst
+3/3/2, rear moderate 1/2/1, middle lightest 1/1/1) - uneven, so aY-derived
+numbers are not directly comparable at face value.
+
+aX (clean, not subject to aY clipping):
+  front 0.115   middle 0.115   rear 0.127   -> middle/front 1.00x, rear/front 1.10x
+Matches the 180mm/s result almost exactly - CONFIRMS the distributed-not-
+localised read holds at full speed, the speed that actually matters. This is
+solid.
+
+127Hz band: front 0.043  middle 0.046  rear 0.083  (looks like ~1.9x rear
+again, reversing the 180mm/s post-shim result of 0.63x). NOT TRUSTED -
+front clipped MORE than rear (3/3/2 vs 1/2/1), so front is probably more
+understated than rear, meaning the true ratio is likely lower than 1.9x, by
+an unknown amount. Genuinely unresolved whether the shim's 127Hz benefit
+holds at 250mm/s or partially reverses - this is an open question, not a
+settled negative result.
+
+TO RESOLVE CLEANLY: the clipping on these short (~80mm) bursts looks tied to
+the sharp accel/decel transient, not cruise - try cutting M201 (accel) while
+keeping M203/cruise at 250mm/s, so the speed that produces the effect is
+preserved but the transient that's causing clipping is softened. Not yet
+tried.
+================================================================================
+
+REDUCED ACCEL AT 250mm/s CRUISE — 23/08/2026. CLEAN, RESOLVES THE AMBIGUITY.
+FRONT IS THE LOUD REGION NOW, NOT REAR.
+--------------------------------------------------------------------------------
+M201 dropped to X4000 Y4000 (0.41g) while M203/cruise stayed at 250mm/s -
+keeps the speed that produces the effect, softens the accel/decel transient
+that was causing clipping. ZERO clipping in all 9 captures (3 segments x n=3).
+This is the first fully clean full-speed-cruise comparison of the day.
+
+           front(Y30-110)   middle(Y155-235)   rear(Y280-360)   ratios (vs front)
+  aY        0.294+-0.013     0.240+-0.003       0.249+-0.001     mid 0.82x, rear 0.85x
+  127Hz     0.051+-0.009     0.043+-0.016       0.031+-0.005     mid 0.85x, rear 0.61x
+  aX        0.127+-0.007     0.108+-0.002       0.122+-0.004     mid 0.85x, rear 0.96x
+
+ALL THREE metrics agree: FRONT is the loudest region, REAR is the quietest.
+This resolves the previous ambiguous/clipped 250mm/s run - that apparent
+"rear louder again, 1.9x" reading was a clipping artefact (front had clipped
+worse than rear there, understating it). Once measured cleanly, the opposite
+is true: the rear-right shim is confirmed working, and front - not rear - is
+now the standout region.
+
+CAUTION before over-interpreting as a new rail defect: "front" here is Y30-110,
+close to the Y-min endstop - a mechanically different neighbourhood (switch,
+bracket, cable routing near home), not necessarily anything to do with rail
+straightness. This has NOT been given the same scrutiny the sensor lead got
+yesterday for X-position dragging (macros/is_x10_recheck.g, ruled out at 12%
+of the gap). Do not conclude "another rail defect near the front" without a
+comparable control test first.
+================================================================================
+
+RETEST — 23/08/2026, "retest problematic area" (after time at Y20). FRONT
+ELEVATION DID NOT REPRODUCE. BEST RESULT OF THE DAY.
+--------------------------------------------------------------------------------
+Same three segments, same clean conditions (M201 X4000 Y4000, M203/cruise
+250mm/s). Zero clipping throughout.
+
+           front            middle           rear             spread
+  aY        0.232+-0.007     0.227+-0.000     0.230+-0.005     2%   (was 18-24%)
+  127Hz     0.030+-0.001     0.032+-0.002     0.025+-0.002     26%  (was 65%)
+  aX        0.111+-0.006     0.106+-0.001     0.122+-0.003     16%
+
+The front elevation from the immediately preceding run (aY 0.294, 127Hz
+0.051) did NOT reproduce. Whole 330mm span (Y30-360) now reads essentially
+uniform. Cannot say with certainty whether something changed physically
+during the time at Y20 in between, or whether the earlier "front elevated"
+reading was itself the unstable one-off (is.txt's own method warnings already
+flag that n=3 does not always catch this). Either way this is the cleanest,
+flattest result across X=390's whole travel of the entire day.
+
+STATE AT TIME OF WRITING: rear-right shimmed 0.5mm (slip gauge, temporary),
+rails pinned front/back (not full-length), left rail last touched during the
+mid-pin+rear-slack test earlier today. No further action indicated by this
+result - if it holds on a future re-check, the investigation that started
+this morning (left/right and diagonal A/B asymmetry) can be considered
+resolved at the rear-right corner, pending only replacing the slip gauge
+with a proper shim once stock arrives.
+================================================================================
+
+TREV'S CONCLUSION, 23/08/2026 — SHIMMING IS THE FIX, TORQUE WAS NEVER THE
+VARIABLE. FRONT-RIGHT SCREW SUSPECTED LOOSE FROM AN EARLIER TEST.
+--------------------------------------------------------------------------------
+Trev's read on the whole day, and it fits: clamping a straight rail against a
+mounting surface that isn't true TWISTS THE CARRIAGE, and that twist is what
+produced everything seen today - no torque sweet spot, "by feel" unreproducible
+between two identical attempts, amplitude-dependent onset, and the front
+reading that showed up once and vanished on retest. The fix is correcting the
+actual geometry (shimming), not searching for a torque number - torque was
+never the causal variable, it was just how hard the twist got squeezed in.
+
+Front-right fastener was deliberately slackened + axis moved + retightened
+earlier today as its own small test; Trev suspects it may not have gone back
+fully tight, which would explain the flickering front reading directly (a
+loose screw gives inconsistency, not a stable defect signature).
+
+IMPORTANT DISTINCTION recorded here for next time: the original static twist
+survey (frame_survey_20260821.txt section 2) zeroed its measurement AT
+fastener 1 (front) - that was the reference point, not a confirmed-correct
+value. The survey measures TWIST (differential along the rail) and
+deliberately excluded TILT (uniform offset - G32 corrects that every print).
+It was never actually checking the front for an absolute height problem, so a
+front defect would not contradict it, but a front SHIM VALUE cannot be
+inferred from today's vibration data alone either - vibration is confounded
+by looseness in a way a static measurement isn't.
+
+NEXT: check the front-right screw is actually tight before assuming a shim is
+needed there. If it was loose, retighten to the same light, shim-friendly
+torque as the rest and re-check - that may be the whole fix. Only pursue a
+front static height survey (same method as the rear, section 2-3) if the
+effect reproduces consistently with the screw confirmed tight.
+================================================================================
+
+CORRECTION, 23/08/2026 — THE "FINAL CHECK" BELOW WAS MISLABELLED ON FIRST
+WRITE. IT IS NOT THE REAR-RIGHT-SHIMMED STATE.
+--------------------------------------------------------------------------------
+Before this test was requested, Trev removed the 0.5mm slip-gauge shim from
+the rear-right fastener and moved it to the FRONT-LEFT fastener instead. The
+rear-right corner is now UNSHIMMED (current fastening state there not
+confirmed - pinned per earlier procedure, but no correction in place). The
+result below reflects the FRONT-LEFT-shimmed state, not "rear-right shim
+holding" as originally written here - that line was wrong, corrected now.
+
+THIS DIRECTLY CONTRADICTS frame_survey_20260821.txt section 3: "SHIM
+SCHEDULE - RIGHT Y RAIL ONLY... Do NOT shim the left rail." That instruction
+was based on the static twist survey, which found no twist-correction need on
+the left. A front-left shim producing the best asymmetry result of the whole
+day (below) does not necessarily mean the static survey was wrong - it may
+mean a 0.5mm packer at that fastener is doing something to LOCAL CLAMP
+STRESS/STIFFNESS unrelated to correcting a height defect (the same general
+mechanism explored all day - pinning at extremes, reducing torque, etc. -
+rather than a genuine geometric correction like the rear-right one was).
+Flagging this tension explicitly so it isn't lost: the empirical (vibration)
+result and the static (height survey) result now disagree about the left
+rail, and that needs reconciling before treating front-left shimming as a
+permanent fix, not just noted as a good number.
+
+FULL is_xpos.g + is_diag.g, MACHINE ALREADY HOMED (real Z home/probe this
+time, not the faked datum - irrelevant to this result, neither macro touches
+Z). Zero clipping throughout, clean n=3 everywhere.
+
+              original(bound)      front-left shim   change
+  X=10          0.341              0.163+-0.010      -52%
+  X=200         0.476              0.190+-0.005      -60%
+  X=390         0.241              0.169+-0.006      -30%
+  diagonal A    0.354              0.148+-0.008      -58%
+  diagonal B    0.261              0.143+-0.007      -45%
+  X10/X390 ratio  1.41x -> 0.96x   (resolved)
+  diagA/diagB     1.36x -> 1.03x   (resolved)
+
+Both asymmetries that opened this investigation are resolved - WITH THE SHIM
+AT FRONT-LEFT, not rear-right. 127Hz band (what the shaper targets) mean
+across positions down further to ~0.025 from ~0.070 this morning - shaper
+frequency unchanged all day, still correct, just far less residual left to
+cancel.
+
+NOT YET DONE: a direct comparison test with the shim back at rear-right (its
+original, static-survey-justified position) vs at front-left, all else equal,
+to establish which corner - or possibly both - actually needs it. Right now
+front-left has the better vibration number but rear-right has the better
+static justification. Do not treat this as settled.
+================================================================================

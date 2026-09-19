@@ -1,0 +1,331 @@
+=======================================================================================================
+FRAME GEOMETRY SURVEY + PROBE CALIBRATION  -  21/08/2026
+=======================================================================================================
+Session record. Covers Z probe trigger height, the P5/P9 resolution, a bed.g
+motor-order bug, and a full gantry geometry survey cross-checked against a
+Mitutoyo DTI. Ends with a shim schedule and an order list.
+
+Machine state during all of this: damaged/temporary granite slab fitted, no bed
+heater attached, hotend PT1000 still failed (so everything COLD). Replacement
+slab on order.
+
+-------------------------------------------------------------------------------
+1. HEADLINE FINDINGS
+-------------------------------------------------------------------------------
+*** READ THIS FIRST: three heightmaps were taken. ONLY RUN 3 IS VALID. ***
+    run 1 (16:21) - taken with LOOSE HOTEND SCREWS and the buggy bed.g motor
+                    ordering. Overstated the rear tilt by ~2x. DISCARD.
+    run 2 (18:46) - screws tight, but the centre G30 failed silently so the
+                    datum was unset. SHAPE is valid, absolute datum is not.
+    run 3 (18:57) - tight, correct ordering, datum verified. THE REFERENCE.
+    run3 vs run2 agree to rms 0.0043mm / worst 0.012mm across 49 points.
+    run3 vs run1 differ by rms 0.0454mm / worst 0.136mm.
+
+a) The right Y rail sits LOW at the rear by 0.203mm across the 380mm probe span
+   (0.294mm at the actual 550mm rail centres). Front rails level to 0.024mm.
+   Cause: assembly geometry, not a loose joint - see section 5.
+
+b) Both Y rails bow upward mid-span by ~0.2mm (left +0.196, right +0.225).
+   COMMON MODE, so no beam roll. Leave it - mesh cancels it exactly.
+   This figure reproduced across all three runs including the bad one.
+
+c) The X beam is good: 0.100mm bow over 380mm = 0.26 mm/m. Do not touch it.
+
+d) THE MACHINE IS REPEATABLE to 0.0043mm rms between independent cold runs,
+   once the toolhead is tight. The frame is not moving.
+
+e) G31 trigger height -0.030 +/-0.005, slip gauge, tight assembly. Still COLD;
+   redo hot when the PT1000 lands. See section 3.
+
+f) M92 Z800 is CORRECT, verified by calipers against physical bed travel.
+
+-------------------------------------------------------------------------------
+2. FILES CHANGED TODAY   (all backups in sys/)
+-------------------------------------------------------------------------------
+config.g       G31 P500 X0 Y0 Z-0.025   (was Z0.7)     bak: config.g.bak-trigheight
+bed.g          P1/P2 probe points swapped to match M671 bak: bed.g.bak-preswap
+project.txt    Z motor order corrected                  bak: project.txt.bak-zorder
+mesh.g         NEW - G32-then-G29 mesh macro            (no prior version)
+
+-------------------------------------------------------------------------------
+3. Z PROBE
+-------------------------------------------------------------------------------
+TRIGGER HEIGHT = -0.030mm  +/-0.005   (SLIP GAUGE, tight assembly, 21/08/2026)
+Measured at bed centre with G31 Z0 and a fresh G30 datum, nozzle parked at Z1.100:
+    1.06mm gauge  slips under with ZERO resistance   -> gap > 1.060
+    1.07mm gauge  goes with a PUSH                   -> gap ~ 1.070
+    contact = 1.100 - 1.070 = 0.030  ->  trigger height -0.030
+
+HISTORY OF THIS VALUE
+  +0.700  original placeholder - wrong in sign AND magnitude
+  -0.025  paper feeler (0.10mm, micrometer), hotend screws LOOSE, +/-0.025
+  -0.025  paper feeler repeated after tightening - IDENTICAL, so the loose joint
+          was not in the probe's vertical load path
+  -0.030  slip gauge, +/-0.005  <- CURRENT, in config.g
+
+The paper method was sound: it landed within 5 microns of the slip gauge. The
+gain from slip gauges was PRECISION (+/-0.025 -> +/-0.005), from bracketing with
+two blocks 0.01 apart rather than a 0.05-wide guess. Paper compression, which was
+the suspected error source, turned out to be negligible.
+
+NEGATIVE is correct - the ALPS is a strain gauge, so the nozzle presses in before
+the threshold is crossed. It is a CONSTANT offset: it moves the datum, never the
+SHAPE of a heightmap. No mesh is invalidated by a change here.
+
+*** STILL REDO AT PRINTING TEMPERATURE once the PT1000 is replaced. Nozzle
+    thermal expansion shifts this 0.05-0.10mm - ten to twenty times the current
+    uncertainty. Cold value is fine for geometry, must not reach printing. ***
+
+Note the DTI cannot be used to check this. It is a dial TEST indicator (lever
+type), so absolute readings carry cosine error that depends on stylus arm angle.
+Good for nulling and for shape; not a length standard.
+
+P5 vs P9  ->  RESOLVED: P9, and it is load-bearing.
+RRF only auto-runs deployprobe.g / retractprobe.g for deployable probe types
+(type 9). Those macros are what assert the ALPS enable pin (M42 P1 S1/S0).
+Switch to P5 and the enable never asserts and the probe goes dead.
+DO NOT "tidy" this to P5.
+
+Probe output is BINARY (0 / 1000), confirmed by a 21-step scan at 0.01mm
+intervals - it sits at 0 then snaps to 1000. So the P500 threshold is not
+discriminating anything; any value 1..999 behaves identically.
+
+-------------------------------------------------------------------------------
+4. bed.g MOTOR ORDER BUG  (found and fixed)
+-------------------------------------------------------------------------------
+RRF pairs G30 P<n> to the n-th M671 coordinate. bed.g had P1 and P2 swapped
+relative to M671, so G32 was applying the front-left correction to the rear
+motor and vice versa.
+
+Invisible on a near-level bed - all three corrections come out near-equal and
+swapping two equal numbers changes nothing. It would only bite once the bed was
+genuinely out of tram, as failure to converge.
+
+Corner-to-driver mapping CONFIRMED PHYSICALLY by M584 single-driver jog:
+  driver 0.0 = front-right   M671 entry 0 (424.75, -8.75)
+  driver 0.1 = rear          M671 entry 1 (201, 415)
+  driver 0.2 = front-left    M671 entry 2 (-22.75, -8.75)
+config.g's comment was correct. project.txt was wrong and has been fixed.
+
+-------------------------------------------------------------------------------
+5. FRAME GEOMETRY SURVEY
+-------------------------------------------------------------------------------
+METHOD
+Bed is granite = rigid flat reference. Self-weight sag of a 20mm granite strip
+over a 400mm span computes to 0.0053mm - fifty times too small to matter, so the
+slab cannot be the source of anything measured here. A rigid plate on a 3-point
+mount defines a plane exactly, so after G32 the entire heightmap residual is
+MACHINE geometry, not bed.
+
+HEIGHTMAP - RUN 3, THE VALID ONE (7x7, X10:390 Y16:380)
+min 0.000  max 0.459  mean 0.137  deviation 0.104
+Row 0 = Y16 (FRONT), row 6 = Y380 (REAR). RRF writes rows from Ymin upward.
+
+   0.273  0.237  0.221  0.197  0.182  0.181  0.249     <- Y16   front
+   0.151  0.108  0.082  0.078  0.071  0.071  0.153
+   0.082  0.042  0.023  0.011  0.001  0.024  0.113
+   0.069  0.028  0.008  0.000  0.009  0.029  0.129
+   0.088  0.057  0.041  0.037  0.063  0.086  0.187
+   0.156  0.121  0.117  0.131  0.149  0.189  0.306
+   0.256  0.244  0.259  0.276  0.304  0.346  0.459     <- Y380  rear
+  X10                                            X390
+
+Positive = bed reads HIGH = toolhead sits LOW there (bed is flat granite, so it
+is the gantry that moves). Sign confirmed by dropping the bed 0.400mm and
+watching the DTI fall.
+
+EDGE SPREADS (left to right, mean removed)   run1     run2     run3
+  front edge                                -0.022   -0.018   -0.024
+  rear  edge                                +0.419   +0.210   +0.203
+  -> front reproduces everywhere. Rear was DOUBLED by the loose toolhead.
+
+RAIL HEIGHTS (sign flipped, +ve = rail higher; columns X10 / X390)
+     Y     left    right      R-L
+    16   -0.273   -0.249   +0.024
+    77   -0.151   -0.153   -0.002
+   137   -0.082   -0.113   -0.031
+   198   -0.069   -0.129   -0.060
+   259   -0.088   -0.187   -0.099
+   319   -0.156   -0.306   -0.150
+   380   -0.256   -0.459   -0.203
+
+Right rail drop ACCELERATES rearward - a uniform twist would be linear. This is
+a droop or mislocated support at the rear, not the assembly being cocked.
+
+Rail crown vs own chord: left +0.196, right +0.225 (common mode - ignore)
+X beam bow after removing rail tilt: +0.100mm / 380mm = 0.26 mm/m (good)
+
+DTI CROSS-CHECK - NOW OF LIMITED VALUE
+A Mitutoyo lever DTI clamped to an M6 bolt in the hotend was swept over the bed
+and agreed with run 1 to rms 0.019mm. That agreement is much weaker evidence than
+it first appeared: the indicator was mounted on THE SAME LOOSE HOTEND, so both
+instruments shared the defect. Treat the DTI sweep as corroborating run 1, which
+is itself discarded. The DTI also reads ~11% high (see section 7).
+What the DTI did establish soundly: the sign convention, and that the granite is
+a valid flat reference.
+
+NOT A LOOSE JOINT
+Rear joint is an angle bracket with a large gusset and 4x M6, plus tower
+fasteners outboard. 0.42mm is far too large for elastic deflection of that.
+Measurements agree: zero hysteresis on reversal, and the reading returned to
+-0.225 at Y15 after a full traverse. A joint working loose would not repeat to
+5 microns. Conclusion: built-in assembly geometry.
+0.42mm over 400mm is 1 part in 1000 - below what a square and rule will hold on
+a frame this size.
+
+-------------------------------------------------------------------------------
+6. SHIM SCHEDULE   -  RIGHT Y RAIL ONLY   (revised from run 3)
+-------------------------------------------------------------------------------
+Basis: MGN12, 500mm rail, 25mm hole pitch, 12.5mm end distance, 20 holes.
+Fastened at the two centre holes then every other hole outward = 10 fixings.
+Rail centre assumed aligned to Y travel centre (machine_Y = rail_pos - 55).
+Scale factor 550/380 = 1.447 (rail centres 550mm vs 380mm probe span).
+Zeroed on fastener 1 - the front is the datum, it is already level.
+
+ #   rail mm   machine Y   exact    USE     build from      (run1 value, VOID)
+ 1      37.5      -17.5    0.000    0.00    (none - datum)   0.00
+ 2      87.5       32.5    0.021    0.00    (none)           0.05
+ 3     137.5       82.5    0.048    0.05    0.05             0.15
+ 4     187.5      132.5    0.081    0.10    0.1              0.20
+ 5     237.5      182.5    0.121    0.10    0.1              0.30
+ 6     262.5      207.5    0.143    0.15    0.1 + 0.05       0.35
+ 7     312.5      257.5    0.192    0.20    0.2              0.45
+ 8     362.5      307.5    0.247    0.25    0.2 + 0.05       0.55
+ 9     412.5      357.5    0.308    0.30    0.2 + 0.1        0.65
+10     462.5      407.5    0.375    0.40    0.4              0.75
+
+Underlying fit (unscaled, before x1.447):
+  shim(Y) = -0.00239 + 0.000276*Y + 8.574e-07*Y^2
+  Use this if fastener positions differ. More progressive than the run 1 fit -
+  a straight taper is a poorer approximation now, not a better one.
+
+RULES
+- Shims must span the FULL rail width (12mm). Washer-sized shims let the rail
+  bridge and deform locally - defeats the point and wears the bearings.
+- Grade it, never step it. Every fixing gets its own thickness.
+- Front two fasteners get NOTHING. All correction is added going rearward.
+- Do NOT shim the left rail. Do NOT touch the X beam.
+
+CAVEATS
+- Fasteners 1 and 10 (Y-17.5 and Y+407.5) are EXTRAPOLATED - the mesh covered
+  only Y16-380. #10 is the largest shim in the stack and the one most worth
+  verifying directly before cutting.
+- Rail placement is assumed, not measured. Sensitivity is low (+/-20mm of
+  placement = ~0.025mm of shim, below stock granularity). Second order.
+- Rail spacing 550mm is the sensitive input and IS measured. Do not change it
+  without recomputing.
+
+-------------------------------------------------------------------------------
+7. Z SCALE DISCREPANCY  ***RESOLVED 21/08/2026 - Z IS CORRECT***
+-------------------------------------------------------------------------------
+Commanding a 0.400mm Z move produced 0.4425mm of DTI deflection (+10.6%). Two
+candidates were open: wrong Z steps/mm, or the DTI over-reading.
+
+RESOLVED BY DIRECT MEASUREMENT after a power cycle:
+  commanded Z50 -> Z20   = 30.000mm
+  caliper, fixed frame reference to bed surface:
+      at Z50   81.97 mm
+      at Z20   51.96 mm
+      measured travel 30.01 mm   -> error 0.03%, i.e. caliper resolution
+
+*** M92 Z800 IS CORRECT. The bed arm linkage theory is dead. ***
+*** The heightmap is in REAL MILLIMETRES. The shim table in section 6 stands
+    exactly as written - NO 10% rescale. ***
+
+The 10.6% therefore belongs to the Mitutoyo, almost certainly a stylus that is
+not the length the indicator is calibrated for (lever DTIs scale directly with
+stylus length; a short stylus over-reads). Dividing every DTI reading by 1.1062
+improves agreement with the mesh from rms 0.0231 to 0.0187mm - a 19% improvement,
+supportive but not decisive on its own. The caliper check is the real evidence.
+
+PRACTICAL CONSEQUENCE: that indicator reads ~11% high until the stylus is
+identified. Fine for finding shape and nulling to zero; do not trust it for
+absolute magnitudes. Check the stylus length against the indicator's rated length
+before using it as a measuring instrument again.
+
+One point remains a genuine outlier: front-right (X385 Y15) sits -0.043 from the
+mesh as read, and -0.060 corrected - it gets WORSE with the correction, unlike
+everything else. Front-left was never captured. Worth re-measuring both corners
+before relying on the front edge being level to 0.022mm.
+
+-------------------------------------------------------------------------------
+8. ORDER LIST
+-------------------------------------------------------------------------------
+NEW, arising from this session:
+
+ SHIM STOCK - brass or stainless, for the right Y rail
+   Minimum needed:   0.05mm x7,  0.1mm x5,  0.2mm x5,  0.4mm x4
+   Order at least 2x that - they get cut, dropped and re-made.
+   Sheet stock is more useful than pre-cut washers: needs to span the full 12mm
+   rail width with an M3 clearance hole or slot. A shim assortment pack in
+   0.05/0.1/0.2/0.4 covers it.
+   NOTE: hold until the Z scale question in section 7 is settled - if Z is the
+   culprit every thickness rises ~10%.
+
+ FEELER GAUGE SET - metric, including 0.05 and 0.10 blades
+   Trigger height was measured on paper, which is why it carries +/-0.025.
+   Two known blade thicknesses give two independent estimates that should agree,
+   which also validates the drag judgement. Needed for the hot recalibration.
+
+ALREADY OUTSTANDING (see project.txt PROCUREMENT - not repeated in full):
+   Granite slab replacement, hotend PT1000, F1 3.15A 5V MDR fuse,
+   Key-Bak reel, cable glands, 20mm momentary push button.
+
+-------------------------------------------------------------------------------
+9. NEXT STEPS, IN ORDER
+-------------------------------------------------------------------------------
+ 1. Resolve the Z scale question (section 7). Blocks the shim thicknesses.
+ 2. Re-run G32 + G29 AFTER A POWER CYCLE and confirm the corners reproduce.
+    Everything here rests on ONE heightmap taken in a single session with the
+    machine never re-homed from cold. Do not cut ten shims on one capture.
+ 3. Anchor the rear extrapolation: DTI readings at Y380-390 are inside the
+    travel envelope and would replace fastener 10's predicted value with a
+    measured one. Y-17.5 cannot be reached, but it is the zero reference so an
+    error there only shifts everything uniformly.
+ 4. Measure front-left corner with the DTI - the one corner never captured.
+ 5. Shim the right rail per section 6. Requires removing rear insulation.
+ 6. Re-check the FRONT corners afterwards - freeing a structural joint on a frame
+    this size can redistribute more than intended.
+ 7. Re-run G32 + G29 to verify the correction landed.
+ 8. After PT1000 arrives: hot trigger height recalibration, then re-mesh.
+
+Note on timing: the machine cannot print until the PT1000 arrives, so nothing is
+blocked by leaving the frame as-is. The replacement slab will force a re-tram and
+re-mesh anyway - doing frame work BEFORE that lands inside a measurement cycle
+you are already paying for.
+
+-------------------------------------------------------------------------------
+10. THINGS THAT WOULD HAVE CAUGHT ME OUT
+-------------------------------------------------------------------------------
+*** A LOOSE TOOLHEAD SILENTLY CORRUPTS EVERY PROBE MEASUREMENT. ***
+The ALPS is a strain gauge - it measures force THROUGH the toolhead, so any loose
+joint sits in the load path. Loose hotend screws doubled the apparent rear-edge
+tilt (0.203 -> 0.419mm) and it did NOT look like noise: it looked like smooth,
+plausible, self-consistent geometry that survived a decomposition and matched a
+dial indicator. It nearly resulted in a rail being shimmed to correct for it.
+CHECK TOOLHEAD FASTENERS BEFORE ANY PROBE SURVEY. And note the DTI was clamped
+to the same hotend, so a second instrument agreeing is NOT independent
+confirmation if it shares the mounting.
+
+- RRF heightmap rows run Ymin FIRST. Row 0 is the FRONT, not the rear.
+- The ALPS enable is de-asserted between probes by retractprobe.g. Reading
+  sensors.probes[0].value outside a probe cycle returns 0 regardless of load -
+  assert M42 P1 S1 first or the reading is meaningless.
+- Heightmap "positive" means bed high, which with a flat bed means the GANTRY IS
+  LOW there. The correction is to RAISE that corner, not lower it.
+- move.compensation type must read "none" before any geometry measurement, or
+  the machine is silently correcting the thing you are trying to measure.
+- move.calibration.initial.deviation reads 0 both when G32 has never run and
+  when it converged perfectly. It cannot distinguish them.
+- bed.g exits its loop on convergence OR the 15-iteration cap. Completing G32 is
+  NOT proof it converged.
+- The final centre G30 in bed.g had NO result check until 21/08. It failed once
+  ("probe already triggered before probing move started"), left the Z datum
+  unset, and displaced a whole heightmap by 0.25mm while reporting success.
+  Fixed: Z5 lift + 1s release dwell + result check. Do not remove them.
+- ALWAYS take a second heightmap after a power cycle before acting on the first.
+  That single practice caught all of the above.
+
+=======================================================================================================
+END
+=======================================================================================================

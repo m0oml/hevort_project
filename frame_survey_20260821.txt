@@ -1,0 +1,1659 @@
+===============================================================================
+HevORT FRAME & BED GEOMETRY - RESULTS
+Measured 21-22/08/2026.  Rewritten clean 22/08 - supersedes all earlier versions.
+Working detail and superseded drafts: /home/trev/hevort_project/survey_data/
+===============================================================================
+Bed at time of measurement: TEMPORARY damaged granite slab (no heater) with a
+5mm FR4 sheet laid loose on top. Surface figures below belong to that stack and
+must be re-measured when the real heated bed arrives. The MACHINE figures do not.
+
+-------------------------------------------------------------------------------
+1. WHAT IS ACTUALLY WRONG
+-------------------------------------------------------------------------------
+a) RIGHT Y RAIL LOW AT REAR - shimmable, and the only mechanical fault worth
+   correcting. Rail differential front-to-rear:
+        cold 23C   0.344 mm      45C   0.372 mm      60C   0.358 mm
+   TEMPERATURE INDEPENDENT to +/-0.02mm across 23K. Measure it cold.
+   -> shim schedule, section 3.
+
+b) X BEAM BOWS WITH TEMPERATURE - not correctable, mesh it.
+   -11.7 microns/K, LINEAR in frame dT (verified at 3 temperatures: the change
+   at 45C is 0.597 of the total to 60C, where linear predicts 0.571).
+   Cause: steel MGN9 rail on a 20x20x3 6063 beam behaves as a bimetallic strip.
+   A shim is a constant and this is not - it cannot be corrected mechanically.
+   The real fix is the dual MGN9 sandwich already on the project list: symmetry
+   cancels the couple, and it also addresses the 215Hz torsional mode.
+
+c) Z DATUM MOVES A LOT WITH TEMPERATURE.
+        cold -> 45C   +0.511 mm       cold -> 60C   +0.782 mm
+   Linear in chamber dT to ~1%. Harmless IF you re-datum hot; fatal if you home
+   cold and print hot. Print start MUST re-datum once soaked.
+
+d) THE BED IS NOT THE PROBLEM. It rests freely on three points, so it can only
+   contribute a PLANE, and G32 nulls a plane at every print. Its mounting needs
+   no work.
+
+e) THE FRAME NEEDS NO LEVELLING. 4.35mm of shim under one foot moved the twist
+   by 6 microns (0.0014 mm per mm). Machine position on the bench is not a
+   variable. Do not buy levelling feet or a stand.
+
+f) SURFACE ERRORS, for information - the mesh handles these, no action:
+        granite  0.114 mm astigmatic (it is NOT a flat reference)
+        FR4      0.028 mm astigmatic
+   The FR4's warp happens to oppose the granite's and cancels much of it. Its
+   CURRENT ORIENTATION IS THE GOOD ONE - 0.395mm range vs 0.635mm rotated 90.
+   Mark it before ever lifting it.
+
+g) REPEATABILITY: 4.7 microns cold, 8-10 microns hot, rms between back-to-back
+   maps. The machine measures far better than it is built.
+
+-------------------------------------------------------------------------------
+2. CAUSE FOUND - READ BEFORE CUTTING SHIMS
+-------------------------------------------------------------------------------
+RESOLVED 22/08/2026: the twist term is sensitive to Y RAIL FASTENER TORQUE.
+The twist CHANGED OVERNIGHT 21->22/08 with the machine idle: 0.040 -> 0.122mm
+(machine-only figures, surfaces removed). Every other candidate was ruled out
+by measurement: bed mount (plane only, can't twist), bench/support (would need
+68mm of bench error), granite orientation (0.017mm), frame temperature (too
+small), umbilical (Key-Bak is 4oz = 1.11N = 4 microns, and a toolhead force
+makes a BOWL not a twist). Belts were not touched.
+This was flagged as a candidate at the time and not confirmed ("screws were
+tightened on the machine that night - input shaping work"). Confirmed later
+22/08/2026: Trev slackened and retightened the Y rail screws for an input-
+shaping session ("had bollocked them up way too tight"). A same-day cold 4x4
+mesh taken straight afterwards moved by ~50 microns (corner-twist metric 0.339
+-> 0.287mm) relative to the mesh taken before that retightening - same
+mechanism, same direction of effect, caught in the act this time.
+This is the SAME kind of coupling as the X beam bimetallic bow (section on the
+X beam, steel rail bolted to aluminium extrusion) - the rail clamps to the
+frame member and the member deflects with clamping state - except the driving
+variable here is FASTENER TORQUE, not temperature. Retorque the rail and the
+twist moves, by tens of microns per event, comparable to a meaningful fraction
+of the shim schedule itself.
+CONSEQUENCE: the shim schedule below is only as good as the fastener torque it
+was measured at. It is NOT a fixed machine constant like the X beam bow or the
+Z-datum thermal shift - it is a function of how tight these screws currently
+are. Before cutting or fitting shims:
+  1. Do not touch the Y rail fasteners between the reference mesh and fitting.
+  2. If they must come out (to insert shims, they will), retighten to the same,
+     repeatable spec every time - a torque wrench and a recorded torque value,
+     not "by feel". Whatever value is chosen, use it for the final cold
+     reference mesh AND for final assembly, so the schedule and the built
+     machine match.
+  3. Re-measure the cold twist immediately before cutting AND again after
+     fitting, at that same spec, per the standing instruction below.
+DECIDED 22/08/2026: Trev will use a torque wrench, ratchet head (not a preset
+screwdriver). All rail fixings are M3 SHCS. X beam rail is tapped directly into
+the aluminium beam wall (lower ceiling, ~1.0-1.5 N.m standard there to avoid
+stripping the thread) - the Y rails run in full 3030 steel T-nuts, which support
+more (M3 into steel is good for ~1.2-2.0 N.m before yield on a decent alloy
+screw). SPEC SET: 2.0 N.m. Reason for the change from the original 1.0 N.m:
+genuine ratchet-head torque wrenches do not click reliably below about 2 N.m -
+the mechanism needs more leverage/spring travel than a low setting gives it, so
+sub-2Nm work is normally done on a preset screwdriver instead. Since the Y rail
+joint (steel T-nut) can safely take 2.0 N.m, moved the target up to the bottom
+of a real ratchet's range rather than force the screwdriver tool. Repeatability
+is what matters here, not hitting exactly 1.0 - a click wrench is just as
+repeatable dialled to its minimum as anywhere else in range.
+TOOL BOUGHT: CASOMAN 1/4" drive click torque wrench, 1-25 N.m variant, 72-tooth
+head, dual direction, ~£19, Amazon UK. Chosen over the Venzo (2-15 N.m) because
+the fine 72-tooth head needs only ~5deg of swing arc per click - the Venzo's
+coarser ratchet needed more swing arc than the rail screw locations allow. 2.0
+N.m sits well inside this wrench's range rather than at the floor, which is a
+better spot for it too. Confirm the correct hex bit (2.5mm for M3 SHCS) is
+fitted before use - not confirmed included in the base set.
+CAVEAT: confirm the rail screws are alloy steel (12.9 or similar), not plain A2
+stainless, before committing to 2.0 N.m - stainless M3 is usually derated lower
+(~1.3-1.5 N.m) to avoid galling. If they're stainless, dial back to ~1.5 N.m and
+accept it's below this wrench's rated minimum (a click wrench under-torques
+rather than over-torques below its floor, which is the safer failure direction,
+but log which number was actually used).
+DO NOT DEVIATE FROM THE CHOSEN NUMBER once assembly starts.
+SUPERSEDED 22/08/2026: 2.0 N.m above was a generic-table figure, PENDING. Trev
+is instead going to characterise the real number directly - retorque the rail,
+run input shaping, and use the resonance/ringing result (not a chart) to find
+the torque this specific frame actually wants, since input shaping is what
+caught the screws being over-tight in the first place. THE REAL SPEC IS NOT SET
+YET. Do not cut or fit shims, and do not treat 2.0 N.m as final, until Trev
+returns with the number input shaping settles on. Once that number is in hand:
+retorque every Y rail screw to it, cold 4x4 mesh immediately after (no other
+work in between) as the new reference twist, then shim, then re-torque/re-mesh
+to the same number again after fitting.
+
+UPDATE 23/08/2026 — THIS PLAN'S PREMISE IS WRONG. See sys/is.txt PIVOT section
+for the full data. The input-shaping torque sweep this section anticipated was
+run: original torque, 1.0 N.m, "by feel" twice, fully slack, and totally loose,
+all n=3, full Y-position and belt-diagonal accelerometer sweeps. Result is
+MONOTONIC with NO settled number - vibration falls all the way to zero clamp
+force, which gave the best result of the whole series. There is no torque that
+both locates the rail and avoids exciting it; every real clamping force
+deflects the frame member, exactly the mechanism identified above, just now
+confirmed dynamically as well as via the static bed-mesh twist.
+Practical consequence: "wait for the number input shaping settles on" cannot be
+satisfied as written, because no such settled number exists in this range.
+Options going forward: (a) accept a minimum torque that reliably LOCATES the
+rail (not zero - a rail that can slide is a separate real problem, already
+found once this session) and treat the residual ringing/twist at that torque
+as a characterised, compensated machine constant, the same way the X beam bow
+above is accepted and meshed rather than eliminated; or (b) stiffen the joint
+itself (backing plate behind the T-nut wall, or through-bolt instead of T-nut)
+so clamping no longer deflects the extrusion, which would let a normal torque
+be used without this trade-off.
+NOT YET ANSWERED: whether this compliance is RIGHT-rail-specific (matching the
+static shim fault, "do NOT shim the left rail" below) or a general property of
+the T-nut joint on both sides — every torque test so far adjusted both rails
+together. Isolate before finalising anything: adjust one rail at a time.
+BASELINE RECORDED 22/08/2026: both belts read 2.6 on Trev's tension meter, X
+homed, Y0, matched left/right. Pluck-tone check: upper belt ~120Hz, lower belt
+~120-123Hz (by ear, hand-plucked - treat as +/-5Hz). Consistent with matched
+tension. Reference point if tension is ever suspected - re-check this position
+and both readings before assuming drift.
+NOTE: 120-123Hz sits close to the 121-147Hz structural gantry ring-down measured
+19/08/2026 (M593 P"zvd" F127, project.txt line ~248). Belt pluck tone and gantry
+structural mode are different things measured differently and this may be
+coincidence - not asserted as related, just flagged because it is close enough
+to be worth remembering if the input-shaping re-run (already planned - project
+notes, screws were loose during that tuning) turns up a similar frequency.
+
+INDEPENDENT CONFIRMATION - RESONANCELAB, 20/08/2026 (predates this weekend's
+shim work, still valid as a belt-only check): rlab-belta-xy-20260820211035.csv
+and rlab-beltb-xy-20260820211118.csv (moved 27/08/2026 to
+/home/trev/hevort_project/survey_data/sys_archive_20260827/accelerometer/), swept
+excitation, peak response 285Hz (A) vs ~277Hz (B), ~3.6% apart - MATCHED. Independent of the
+22/08 hand-pluck check above (~120 vs ~120-123Hz): different excitation method,
+likely a different mode, numbers don't need to agree - but both calls agree the
+belts are matched, from two dates and two methods.
+=> The shim schedule is built on the CURRENT value. If the twist moves again,
+   the shims are wrong. Re-measure immediately before cutting, and again after.
+
+UPDATE 23/08/2026, LATER — CONCLUSION REACHED. TORQUE WAS NEVER THE VARIABLE.
+Full input-shaping data in sys/is.txt. Summary: the torque sweep the PIVOT
+section above anticipated was run (original / 1.0 N.m / by-feel x2 / slack /
+zero clamp, n=3 each, full Y-position + belt-diagonal sweeps) and came back
+MONOTONIC with no settled number - vibration fell all the way to zero clamp
+force. No torque both locates the rail and avoids exciting it, because every
+real clamping force deflects the frame member - the same mechanism as the
+static twist above, now confirmed dynamically too. Trev's conclusion:
+clamping a straight rail against a mounting surface that isn't true TWISTS
+THE CARRIAGE, and that produced the whole day's IS data (no torque sweet
+spot, unreproducible "by feel" attempts, amplitude-dependent onset, a front
+elevation reading that appeared once and did not reproduce on retest).
+SHIMMING IS THE FIX, not a torque number.
+
+Trev fitted a 0.5mm SLIP GAUGE (temporary stand-in - real shim stock not yet
+in hand) to the rear-right rail, rails pinned front/back only. Cold 4x4 mesh
+re-run twice back-to-back to confirm:
+
+  corner-twist metric   before shim (23/08 09:10)   0.283mm
+                         after shim  (23/08 18:27)   0.011mm
+                         repeat      (23/08 18:33)   0.024mm
+
+13-micron spread between the two post-shim runs - in line with the
+established cold-to-cold noise floor (~10um), so this is a real, repeatable
+effect, not probe noise. This independently confirms the section 3 schedule
+(0.55mm at the rear fastener) by a completely different method - physical
+shim + dynamic/static re-mesh - rather than the static survey calculation
+alone. Raw maps: hevort_project/survey_data/mesh_4x4_cold_20260823_{0910,1827,1833}.csv.
+
+CONFIRMED ON THE FULL 7x7 GRID, 23/08/2026 22:01 - BEST MAP THE MACHINE HAS
+EVER PRODUCED. Cold 7x7 (49 points, mesh.g as-is), machine idle beforehand:
+
+  corner twist   -0.005mm      (4x4 post-shim runs read +0.011 / +0.024)
+  deviation       0.067mm      LOWEST in the whole archive - every 22/08 map
+                               was 0.11-0.22, today's post-shim 4x4s 0.076/0.077
+  min/max        -0.177 / +0.146
+
+Deviation fell even though the 7x7 samples 3x the points of the 4x4, which
+normally catches MORE structure, not less. Least-squares decomposition of the
+map (peak-to-peak across the bed, normalised fit, script in scratchpad):
+
+  bowY    0.125    bowl along Y     ]  opposite signs = astigmatic saddle
+  bowX    0.078    arch along X     ]
+  tiltY   0.047    ]  pure plane - G32 nulls these at every print
+  tiltX   0.038    ]
+  twist   0.012    GONE (was ~0.28 before the shim)
+  residual rms 0.029
+
+The two curvature terms carry opposite signs - an astigmatic saddle, which is
+the documented granite (0.114mm astigmatic, section on the bed) plus the X
+beam bimetallic bow. BOTH ARE ALREADY CHARACTERISED AS NOT SHIMMABLE - mesh
+them, do not chase them with shims. The tilt terms are irrelevant, G32 removes
+them every print. So the shimmable fault is FIXED and what remains is exactly
+the set of terms this survey already says to live with and compensate.
+Raw map: hevort_project/survey_data/mesh_7x7_cold_20260823_2201.csv.
+=> USE THIS MAP AS THE BENCHMARK when the real shim stock goes in. The current
+   fix is still the temporary slip gauge; the graduated section 3 schedule
+   fitted properly should match or beat 0.067mm deviation / ~0.00mm twist.
+
+TOOL/SPEC CHANGE: 1.0 N.m was tested directly and found WAY TOO TIGHT -
+consistent with "no settled torque number" above, since 1.0 N.m is well
+inside the range that still deflects and excites the frame. The CASOMAN
+ratchet (2.0 N.m floor, bought for the now-abandoned "find a settled torque"
+plan) no longer fits what's needed. Trev has ordered a TORQUE SCREWDRIVER
+instead (finer control, lower range) to find and hold a light, "just locates
+the rail without squeezing it" spec - not a load-bearing structural torque,
+just enough to stop the rail sliding. Exact number not yet set.
+
+REVISED BLOCKER: shim stock (OLYCRAFT, section 3 schedule) has NOT arrived
+yet - that is the actual blocker on cutting/fitting now, not a torque number.
+Once stock is in hand: fit real shims in place of the slip gauge, tighten to
+whatever light spec the torque screwdriver settles on, cold 4x4 mesh to
+confirm, done.
+NOT YET CHECKED: front-right fastener is suspected loose from an earlier
+test today (a flickering front vibration reading that appeared once and
+vanished on retest - inconsistency, not a stable defect signature). Confirm
+it is properly tight before drawing any conclusion about a front shim - see
+is.txt and [[hevort-y-vibration-asymmetry-umbilical]] for full detail.
+
+SHIM PLACEMENT A/B, 25/08/2026 - PLACEMENT MATTERS AS MUCH AS THICKNESS.
+Same 0.5mm slip gauge, rail FULLY FITTED (not end-pinned), moved from BEHIND
+the rearmost screw to IN FRONT of it. Identical cold 4x4 script both runs,
+no M558 issued (config.g probe params verified live instead, so the G31 wipe
+trap is designed out rather than worked around).
+
+                        BEHIND      IN FRONT
+   twist                -0.0580     -0.0860
+   deviation             0.0557      0.0528   (3um apart = noise)
+   bowY (Y^2 p-p)       +0.0993     +0.0875
+   bowX (X^2 p-p)       -0.0380     -0.0388
+   residual rms          0.0272      0.0262
+
+BEHIND WINS on twist. Difference map (bed shape cancels) is at the noise floor
+almost everywhere - rms 0.011 - except at rear-right, directly over the shim,
+which moved -0.025. Twist of the difference -0.028. Clean causal signature.
+Mechanism: in front of the screw the shim is INSIDE the clamped span and lifts
+properly; behind it, on the unclamped overhang, screw 10 pulls the rail back
+down and the lift is only partly effective. In front is the stronger lift, and
+since 0.5mm already over-corrects, stronger = worse.
+=> 25mm of placement error is worth 0.028mm of twist. When cutting the real
+   shims, placement accuracy matters at the SAME ORDER as the thickness steps.
+   Get the hole positions right before worrying about foil thickness.
+
+Twist series to date: +0.283 (no shim) -> +0.011/+0.024 (0.5 rear-right,
+end-pinned) -> -0.037 (same, later) -> -0.058 (0.5 behind, fully fitted) ->
+-0.086 (0.5 in front, fully fitted). A single 0.5mm point lift over-corrects
+in the fully-fitted state. DO NOT read that as "section 3's 0.570 at #10 is
+too big" - a single gauge bends the rail around one fulcrum, the graded stack
+supports it continuously. Different load cases; the point-lift number does not
+transfer. A 0.4mm bracketing run was considered and rejected for this reason -
+it would tune a configuration that is about to be dismantled.
+
+CAUTION ON ABSOLUTE CORNER HEIGHTS: the bed is the damaged temporary granite
+slab, so its own shape is baked into every absolute reading and CANNOT be
+separated from rail geometry. Differences between runs are trustworthy (the
+bed does not change); absolute corner values are not. A "rear-left corner is
+deviant" reading was drawn from the 10:17 map and then withdrawn for exactly
+this reason. That question remains OPEN and unevidenced.
+Raw: hevort_project/survey_data/mesh_4x4_shim_{behind,infront}_last_screw_20260825_*.csv
+
+-------------------------------------------------------------------------------
+3. SHIM SCHEDULE - RIGHT Y RAIL ONLY
+-------------------------------------------------------------------------------
+MGN12, 500mm rail, 25mm pitch, two centre fasteners then every other hole = 10
+fixings. Rail centres 550mm apart (measured). Scale 550/380 = 1.447. Zeroed on
+fastener 1. From cold data (best repeatability); fit residual 0.006mm.
+
+HOLE PATTERN CONFIRMED ON THE MACHINE 25/08/2026. Trev read the fitted rail
+front->back: 0 1 0 1 0 1 0 1 0 1 1 0 1 0 1 0 1 0 1 0  (1 = screw fitted).
+500mm MGN12, 20 holes at 25mm pitch, first hole 12.5mm => screws at rail mm
+37.5 87.5 137.5 187.5 237.5 262.5 312.5 362.5 412.5 462.5 - IDENTICAL to the
+table below, adjacent pair straddling rail centre 250mm. No revision needed.
+=> The "machine Y = rail mm - 55" offset is therefore still valid despite the
+   rails having been off since the survey: same holes, fixed frame tapping, so
+   the mapping is preserved. ONE CHECK while the rail is off - confirm the
+   frame has no SPARE tapped holes that would let the rail sit 25mm fore/aft
+   of where it was surveyed. If it can only fit one way, this is settled.
+Note the rearmost screw is hole 19 (462.5) with hole 20 and ~37mm of rail
+behind it - that overhang is where the 25/08 "behind" A/B gauge sat.
+
+  #   rail mm   machine Y   exact    USE     build from        err
+  1      37.5      -17.5    0.000    0.00    (datum - nothing)   0.000
+  2      87.5       32.5    0.048    0.05    0.05               +0.002
+  3     137.5       82.5    0.101    0.10    0.10               -0.001
+  4     187.5      132.5    0.160    0.16    0.15 + 0.01         0.000
+  5     237.5      182.5    0.223    0.22    0.20 + 0.02        -0.003
+  6     262.5      207.5    0.256    0.25    0.20 + 0.05        -0.006
+  7     312.5      257.5    0.327    0.33    0.30 + 0.03        +0.003
+  8     362.5      307.5    0.403    0.40    0.30 + 0.10        -0.003
+  9     412.5      357.5    0.484    0.48    0.30 + 0.15 + 0.03 -0.004
+ 10     462.5      407.5    0.570    0.57    0.30 + 0.15 + 0.12  0.000
+
+INPUT SHAPING CONFIRMS THE OVER-CORRECTION INDEPENDENTLY, 25/08/2026.
+Accelerometer refitted, belts confirmed 2.5/2.5, fake Z datum, is_xpos.g +
+is_diag.g at the standard M201 X8000 / 250mm/s condition:
+   group     NOW(twist -0.130)        BENCHMARK(twist -0.037, 23/08)
+             rmsY   127Hz  clip       rmsY   127Hz  clip
+   X10      0.4689 0.0959  17.0      0.1355 0.0320   0
+   X200     0.2360 0.0489   0.0      0.1711 0.0484   0
+   X390     0.4899 0.0919  14.3      0.1642 0.0473   0
+   diagA    0.1835 0.1409   0.0      0.1361 0.0340   0
+   diagB    0.1532 0.0299   0.0      0.1359 0.0336   0
+   mean rmsY 0.306 vs 0.149   diagA/diagB 1.20x vs 1.00x
+X10 and X390 CLIPPED (railed at +/-2g) where the benchmark did not under
+identical conditions - those two are LOWER BOUNDS, the real amplitudes are
+worse. Cleanest unclipped comparison is X200: 0.236 vs 0.171, +38%.
+diagA gained a 4x 127Hz component (0.141 vs 0.034) peaking at 124.7Hz, with
+belts confirmed even - NOT the tension confound of 23/08.
+=> Static mesh and vibration now agree independently that over-correcting the
+   twist is actively harmful. TWIST SIGN MATTERS, not just magnitude: -0.130
+   rings far worse than the unshimmed +0.283 state ever did. Do not treat
+   "smaller |twist|" as the only goal - overshooting past zero is costly.
+CONFIRMED BY IMMEDIATE REPEAT: run1/run2 mean rmsY 0.3063 / 0.3054 (0.3%
+apart), X10 0.1%, X390 0.5%, diagA 0.4% - far tighter than the 12% between-run
+scatter of 23/08, so this is not noise. 2.06x the benchmark.
+NEW LOW-FREQUENCY MODES - THE IMPORTANT PART. Peak frequencies are stable to
+under a hertz across both runs and have MOVED DOWN vs the benchmark:
+    X10    48.0 / 48.2 Hz   (benchmark 149.3)
+    X390   88.5 / 88.0 Hz   (benchmark 124.8)
+    diagA 124.7 / 124.3 Hz  (benchmark 167.7)
+The structure has gone SOFTER, not just noisier - a new ~48Hz gantry mode
+appeared. That is the worst possible outcome: low modes ring longest, show
+most in print surface, and config.g's M593 zvd F127 shaper cannot touch 48Hz.
+It also explains the clipping - a new soft mode dumping energy at +/-2g.
+Raw: hevort_project/survey_data/accel_shimschedule_overcorrected_20260825_run{1,2}/
+
+*** SECTION 3 IS 1.447x TOO BIG - SCALE EVERY VALUE BY 0.686. 25/08/2026. ***
+Measured, not theorised. Full schedule built correctly (burr pressed out, all
+stacks mic'd on target) and torqued to 0.30 N.m, two datums back to back:
+    twist -0.134 and -0.125 (spread 0.009, inside the 0.013 noise floor)
+Using dD = Z(X=390) - Z(X=10), the gantry-tilt measure that isolates rail
+height from bed shape (the bed is the damaged temporary slab - absolute corner
+heights are NOT attributable to rails, differences are):
+    unshimmed 23/08 09:10   dD = +0.283
+    shimmed + torqued       dD = -0.130 (mean)
+    applied shim differential dS = 0.4815
+    => sensitivity k = 0.413/0.4815 = 0.857
+    => required dS = 0.283/0.857 = 0.330, i.e. SCALE = 0.330/0.4815 = 0.686
+0.686 = 380/550. The 550/380 = 1.447 scale in this section's derivation was
+applied in the WRONG DIRECTION - it should divide, not multiply. (A geometric
+argument was constructed earlier this day that appeared to justify multiplying,
+and predicted k = 0.691; the machine measured 0.857. The measurement wins. Do
+not re-derive this from geometry - it has now been talked round in circles once
+and the empirical number is the one that works.)
+
+CORRECTED SCHEDULE - USE THIS ONE:
+   #   rail mm   old     NEW      stack                     err
+   1     37.5   0.000   0.000   (nothing - datum)
+   2     87.5   0.048   0.033   0.03                      -0.003
+   3    137.5   0.101   0.069   0.02 + 0.05               +0.001
+   4    187.5   0.160   0.110   0.01 + 0.10               +0.000
+   5    237.5   0.223   0.153   0.15                      -0.003
+   6    262.5   0.256   0.176   0.03 + 0.15               +0.004
+   7    312.5   0.327   0.224   0.10 + 0.12               -0.004
+   8    362.5   0.403   0.276   0.01 + 0.12 + 0.15        +0.004
+   9    412.5   0.484   0.332   0.03 + 0.15 + 0.15        -0.002
+  10    462.5   0.570   0.391   0.12 + 0.12 + 0.15        -0.001
+  0.01 x2  0.02 x1  0.03 x3  0.05 x1  0.10 x2  0.12 x4  0.15 x6  (19 pieces)
+NOTHING EXCEEDS 0.15 - if 0.15 cuts with scissors the whole set is burr-free
+and no pressing is needed. Test one 0.15 with scissors before committing.
+
+CAVEAT / HOW TO FINISH THIS: k = 0.857 depends on the 23/08 unshimmed baseline,
+taken at a different unrecorded clamp state, and section 2 says torque moves
+twist by tens of microns. True scale is somewhere near 0.61-0.73. Expect this
+build to land close to zero but not on it. THE NEXT MEASUREMENT CLOSES IT
+EXACTLY: with two shim states both measured at 0.30 N.m, interpolate dD
+linearly against dS to the zero crossing - no historical baseline needed.
+Raw: hevort_project/survey_data/mesh_4x4_shimset_torqued_20260825_14{09,13}_run{1,2}.csv
+
+TIN SNIPS ADD A FLAT +0.07mm TO EVERY PIECE - MIC AFTER CUTTING, ALWAYS.
+25/08/2026. First fitted set over-corrected badly (twist -0.160 where 0.000
+was wanted). Cause was NOT the schedule. Mic'd post-cut:
+    nominal 0.15 -> 0.22    0.20 -> 0.27    0.30 -> 0.37   (all +0.07)
+    scissors-cut 0.05 and 0.10 -> exact, no deformation
+A CONSTANT offset independent of material thickness = the snips rolling a lip
+of fixed height off the cut edge, not a thickness error. The rail sits on the
+highest points of the shim, which are those edges, so the lip is fully in the
+load path. Worst at the rear because screw 9 carries TWO snipped pieces
+(+0.14); the measured mesh error grew rearward to match (-0.023 -0.079 -0.054
+-0.096 down the X=390 column). Modelled profile predicted -0.384 twist change
+vs the schedule's -0.339; observed -0.443. Burr accounts for the bulk, rest is
+the untorqued rail plus clamp-state drift against the baseline.
+=> The 550/380 = 1.447 scale factor was briefly suspected of being inverted and
+   is NOT. Mesh spans 380 of a 550mm rail separation so it UNDERSTATES rail
+   twist; multiplying by 1.447 to get the shim is correct. Section 3 stands.
+FIX: press the pieces flat between hard flat faces (vice + parallels). Trev got
+0.30 down to 0.31. Do not rely on bolt preload to flatten burr - the rail was
+untorqued here, which is why it showed at full strength, but how much a lip
+crushes is not predictable enough to design around.
+USEFUL ACCIDENT: a uniform +0.01 residual burr very nearly cancels the
+shortfall from omitting the 0.01-0.05 trim layers - the two errors run opposite
+ways. As-built with +0.01 pieces, 0.05 restored at screw 6 and screw 10 made
+as 0.30+0.15+0.10 (NOT +0.12, which overshoots to 0.59):
+     screw  rail    stack                    built  wanted    err
+       1     37.5   nothing (datum)           0.00   0.000  +0.000
+       2     87.5   0.05                      0.05   0.048  +0.002
+       3    137.5   0.10                      0.10   0.101  -0.001
+       4    187.5   0.15                      0.16   0.160  +0.000
+       5    237.5   0.20                      0.21   0.223  -0.013
+       6    262.5   0.20 + 0.05               0.26   0.256  +0.004
+       7    312.5   0.30                      0.31   0.327  -0.017
+       8    362.5   0.30 + 0.10               0.41   0.403  +0.007
+       9    412.5   0.30 + 0.15               0.47   0.484  -0.014
+      10    462.5   0.30 + 0.15 + 0.10        0.57   0.570  +0.000
+   residual twist error -0.006 (half the 0.013 noise floor), worst single
+   error -0.017, shape rms 0.008. THIS IS THE SET TO BUILD.
+
+REVISED AGAIN 25/08/2026 (LATER) - BURR-DRIVEN, NO FOIL UNDER 0.10.
+Tin snips raise a 0.02-0.05mm burr on stainless, which is larger than the
+tolerance of the table below, and Trev proposed simply dropping the 0.01-0.05
+trim layers. That was rejected: it costs -0.023/-0.056/-0.027/-0.034 at
+screws 5/7/9 and collapses 5 and 6 to the SAME 0.20 (a step, the one thing
+the RULES below forbid), all errors in the same direction = systematic
+under-correction, peak error 0.056 = the size of the whole deviation being
+corrected. And it does not even fix the burr, which is on the 0.20/0.30
+pieces too. Recomputed instead using only 0.10/0.12/0.15/0.20/0.30 (plus one
+standalone 0.05 at screw 2, which has no stack partner for a burr to prop):
+
+   screw  rail mm  target   stack                 total    err
+     1      37.5   0.000    nothing (datum)        0.00   0.000
+     2      87.5   0.048    0.05                   0.05  +0.002
+     3     137.5   0.101    0.10                   0.10  -0.001
+     4     187.5   0.160    0.15                   0.15  -0.010
+     5     237.5   0.223    0.10 + 0.12            0.22  -0.003
+     6     262.5   0.256    0.10 + 0.15            0.25  -0.006
+     7     312.5   0.327    0.12 + 0.20            0.32  -0.007
+     8     362.5   0.403    0.10 + 0.30            0.40  -0.003
+     9     412.5   0.484    0.12 + 0.15 + 0.20     0.47  -0.014
+    10     462.5   0.570    0.12 + 0.15 + 0.30     0.57   0.000
+
+   Worst error 0.014, strictly increasing, 17 pieces:
+   0.05 x1   0.10 x4   0.12 x4   0.15 x4   0.20 x2   0.30 x2
+   USE THIS TABLE. The fine-trim version below is superseded but kept because
+   it documents what the exact targets are.
+METHOD: snips only to rough an oversize blank; tape the stack, cut the final
+edge and slot through the whole stack in one pass, then stone the burr flat.
+Press each finished stack on something flat - if it rocks, burr is still on.
+
+SUPERSEDED 25/08/2026 BY THE TWO-PIECE METHOD BELOW - cutting the notch was
+itself the dominant error source. Use two plain rectangles per screw, one
+either side, no notch at all. Trev also confirmed 0.20 cuts cleanly with
+scissors, so no snips and no pressed pieces are needed anywhere.
+
+=======================================================================
+*** THE GANTRY RACK - 26/08/2026 LATE. THE REAL FAULT. READ THIS FIRST. ***
+=======================================================================
+*** THE RACK IS NOT A PRE-EXISTING FAULT. WE CREATED IT. ***
+The machine was SQUARE WHEN BUILT and square when it went together. The rack
+appeared ALONGSIDE THE BELT REMOVAL AND RETENSIONING - it is introduced by the
+act of retensioning and by slackening the motor couplings, both of which move
+the gantry while nothing is holding it square. Trev's point, and it changes
+what this section is for: this is NOT "check for a hidden rack", it is
+"YOUR TENSIONING PROCEDURE MAKES ONE unless you constrain the gantry".
+Once created it dominated every other measurement on the machine. Squaring it
+recovered 35% of motor authority in one step - more than every other change
+made in three days put together.
+
+    state              belt_check peak |PID|   authority used
+    racked                227 / 240              89% / 94%
+    squared               140 / 148              55% / 58%
+    squared + tensioned   133 / 134              52% / 52%
+
+WHY IT HID FOR SO LONG:
+ - A RACK IS INVISIBLE TO THE MESH. It is an XY squareness error; the bed
+   heightmap is blind to it. Twist read +0.001 (perfect) with the gantry
+   badly out of square. NEVER take a good mesh as evidence of squareness.
+ - IT MASQUERADES AS SLACK BELTS in anything that measures motor effort,
+   because dragging a skewed gantry loads the motors exactly as a slack belt
+   does. Hours were spent tensioning belts to fix it. Proof: tension was
+   raised from 42 N to 64 N (+52%) and peak effort did not move at all
+   (238.6 -> 239.6). The rack was swamping the tension signal completely.
+ - HIGH TENSION MASKS IT. At 78 N the vibration numbers were the best ever
+   recorded (8.4 um displacement) WHILE the motors sat at 89-94% authority.
+   Those two results were reported separately and are the same finding:
+   enough belt stiffness to hold a racked gantry rigidly buys low vibration
+   at the price of nearly all the control range. Trev's read, and correct -
+   that "best state ever" was a compensated state, not a healthy one.
+
+*** SQUARE THE GANTRY MECHANICALLY BEFORE RESYNCING THE MOTOR COUPLINGS. ***
+The coupling resync makes each motor's zero agree with WHEREVER THE GANTRY
+HAPPENS TO BE. Do it racked and the motors accept the skew as correct -
+zero position error, low idle PID - and the fault becomes the reference.
+That is why the standstill fight kept "returning": each resync re-baselined
+onto a worse skew. 366 -> 64 -> 16 while the geometry got worse.
+LOW IDLE PID IS NOT A GEOMETRY CHECK. It is what a locked-in rack looks like.
+Use belt_check for geometry; a rack shows there and cannot hide.
+
+HOW THE RACK GETS INTRODUCED - IT WILL HAPPEN AGAIN:
+ The tensioners are on the FRONT motor towers only, and each motor pair is a
+ DIAGONAL - one front motor, one rear:
+     X pair: 70.0 back-right + 71.0 front-left
+     Y pair: 72.0 front-right + 73.0 back-left
+ So tensioning changes the belt length between the two motors OF THE SAME
+ PAIR. That forces a phase offset between motors commanded to identical
+ positions, they fight, and the gantry racks because that is the compliant
+ direction. Structural, not a mistake.
+
+THE FIX FOR TENSIONING WITHOUT RACKING IT - ONE OPERATION, ONE POSITION:
+ There are NO HARD STOPS on this machine (optical endstops only), so the
+ gantry must be held square by a fixture. Trev used a pair of 1-2-3 blocks;
+ printed matched spacers are being made for the front, where the grub screws
+ are reachable. BOTH LEFT MOTORS (71.0 and 73.0) are the accessible pair and
+ conveniently are one motor from each belt pair, which is exactly what is
+ needed.
+     1. gantry held square against the spacers
+     2. slacken the couplings on 71.0 and 73.0   (pulleys now free)
+     3. tension the belts - free pulleys rotate, NO phase offset is forced
+     4. clamp the couplings, still held square
+ Doing it this way means there is nothing to resync afterwards and no second
+ visit that costs the reference.
+ IF USING PRINTED SPACERS: they must be a MATCHED PAIR to better than the
+ rack you are correcting. FDM tolerance (+/-0.1-0.2mm) is the same size as
+ the error, so print slightly short, mic them, and SHIM THE SHORTER ONE with
+ the foil stock to match. Print lying down so load runs along the layers.
+
+=======================================================================
+BELT TENSION - MEASURING IT ON THIS MACHINE, 26/08/2026
+=======================================================================
+mu MEASURED: 95 g over 496 cm = 0.01915 kg/m (19.2 g/m). NORMAL for 12mm GT2
+fibreglass (Gates GT2-LL). Steel cord would be ~31 g/m. An earlier claim that
+these were steel cord came from comparing against a SIX millimetre table
+figure and is retracted.
+     T = 4 L^2 f^2 mu ;  on the 260mm span,  T = 0.005179 * f^2
+     85 Hz -> 37 N    88 Hz -> 40 N    111 Hz -> 64 N    123 Hz -> 78 N
+
+WHAT EACH TOOL IS ACTUALLY GOOD FOR:
+ SPECTROID / PLUCKING - only gives usable numbers when the belt is TOO TIGHT.
+   Trev's observation and it is physically right: lower tension means lower
+   frequency (toward 50Hz mains hum) and a slacker belt damps faster, so the
+   signal weakens exactly as the noise gets relatively louder. THE METHOD'S
+   USABLE RANGE STARTS ABOVE THE OPERATING RANGE. Readings of 79/82/124 on
+   the same belt are the app latching onto different spans. Do not rely on it.
+ RC2 METER - deflection gauge, tables for 6 and 9mm only, FULL SCALE 29.4 N
+   which is BELOW what this machine needs. Its absolute numbers are
+   meaningless on 12mm belt (reads ~20 N where the physics says 60). Its
+   REPEATABILITY is fine - use it only for matching and for tracking drift.
+ belt_check (macros/Frame/belt_check.g) - THE PRACTICAL ONE. Runs one
+   standard move and reads peak motor effort. No microphone, no mains hum, no
+   belt-width tables. Needs a SQUARE gantry to mean anything.
+ DEFLECTION + LUGGAGE SCALE - if an absolute number is ever needed, and it
+   gets MORE sensitive as tension drops, i.e. it works exactly where plucking
+   fails.  T = F * L / (4 * d).  On the 260mm span at d = 10mm:
+     30 N -> 0.47 kg    40 N -> 0.63 kg    60 N -> 0.94 kg    78 N -> 1.22 kg
+   A programmable sonic meter would solve it properly but they start near
+   GBP 800 in the UK; the cheap 2GT gauges on Amazon are deflection type with
+   6/9mm tables - the same trap as the RC2. Do not buy one.
+
+HOW MUCH TENSION DOES IT ACTUALLY NEED:
+   T_min = m*a/4 per belt (no-slack), recommended m*a/2.
+     at 35000 mm/s2:  3 kg -> 26 N min    4 kg -> 35 N min
+     at 20000 mm/s2:  3 kg -> 15 N min    4 kg -> 20 N min
+   The 3 kg gantry mass is an ESTIMATE and the weakest number in the chain.
+   An earlier recommendation of 53-78 N was sized for a RACKED machine and is
+   too high. ~40 N on a square gantry is quiet and gives 52% authority used.
+   NOTE the acceleration sweep found 20k and 35k INDISTINGUISHABLE (17.1 vs
+   17.2 um on X), so dropping M201 to 20000 cuts the tension requirement 43%
+   for no measurable loss.
+
+=== REFERENCE STATE, 26/08/2026, SQUARE GANTRY ===
+   plucked      85 / 88 Hz  =  37.4 / 40.1 N
+   RC2          2.8, both even
+   belt_check   133.4 / 133.9   (matched to 0.5)
+   standstill   70 total - X pair opposing (+21.6 / -35.9), Y pair clean
+   thump        SILENT
+ The X-pair standing offset is the tensioning artefact described above.
+ LEAVE IT. 70 is a fraction of the 366 the rack cost, move-time effort is the
+ lowest ever measured, and resyncing it is what caused the rack last time.
+ To make belt_check read newtons it needs ONE more pluck-and-run pair at a
+ different tension. It will come naturally at the next re-tension.
+
+STILL OPEN:
+ - Ringing tower to confirm the shaper frequency. config.g is now F147 (was
+   F127) but at 400mm/s the dominant peak is EXACTLY 200Hz = tooth-passing
+   (400mm/s / 2mm pitch), so cruise captures are contaminated by forced
+   excitation and cannot identify a resonance cleanly. Only a ringing tower
+   can. f = speed / ringing spacing.
+ - 500 mm/s IS NOT USABLE. The drive saturates: 94% authority, 0.47 steps of
+   steady lag, 1.7 steps peak-to-peak wander. 400 mm/s is clean (85 peak,
+   33%). Cap M203 at 24000 if you want it enforced.
+ - G31 is a COLD number (-0.030). Redo at a 150C standby once the hotend
+   PT1000 is replaced - see the hot soak section.
+ - Belts bed in FAST: one 60C cycle and ~2 hours took 78 N down to 55/41 N.
+   Re-check after every heat cycle until it stops moving.
+ - Y-pair headroom split and the two position-locked features (Y~148, X258.4)
+   were both measured on a RACKED machine and need re-checking now it is
+   square.
+
+=======================================================================
+HOT SOAK AT 60C - FIRST PROPER CHARACTERISATION, 26/08/2026
+=======================================================================
+Chamber SP 600, three 4x4 meshes during the soak, M18 between each.
+Machine state: 78 N belts, couplings synced, twist +0.004 cold.
+
+   time    twist     dev     mean     bowX     bowY
+   15:47  +0.0960  0.2004  -0.2322  -0.3489  +0.0505
+   16:00  +0.0870  0.2027  -0.2132  -0.3447  +0.0690
+   16:12  +0.1190  0.2004  -0.1974  -0.3378  +0.0953
+   cold   +0.0037  0.0755   ------  -0.0700  +0.1370
+
+1. THE X BEAM BOW IS WHAT HEAT DOES TO THIS MACHINE. bowX goes -0.070 cold
+   to -0.349 hot - FIVE TIMES - and is most of the 0.200 hot deviation on its
+   own. That is the documented bimetallic bow (steel rail bolted to aluminium
+   extrusion). It reaches its value FAST and then holds: only 0.011 of change
+   across the whole 21-minute soak. NOT SHIMMABLE - mesh it.
+
+2. THE MACHINE IS NOT SETTLED AFTER 21 MINUTES. Two effects still moving:
+     DATUM  +1.5 then +2.0 um/min, not slowing, +34.8 um over 21 min.
+            Matches this file's existing "~2 microns/min" figure exactly.
+            The documented overshoot-and-reversal had NOT happened yet.
+     bowY   +0.051 -> +0.069 -> +0.095, monotonic, 0.044 over 21 min, well
+            clear of noise. TWO meshes looked like scatter; THREE made it a
+            trend - do not call a drift settled off a pair.
+   => A REPRESENTATIVE HOT MESH NEEDS A LONGER SOAK THAN 20 MINUTES. This
+      series understates bowY. Worth a longer run to find where it plateaus,
+      since that is the number a synthesised hot map needs (section 4).
+
+3. DATUM DRIFT DOES NOT MATTER IN PRACTICE - G30 re-zeroes before every print.
+   SHAPE drift is the one that would, and bowY is the open question.
+
+4. Twist scatters +0.087..+0.119 hot against +0.004 cold. Small next to the
+   beam bow but the frame does not stay square through a heat soak.
+
+5. COOLED BACK DOWN AND RE-MEASURED - FULLY REVERSIBLE, GEOMETRY INTACT.
+   Cold mesh taken once the chamber was back to 26.1C:
+     state                     twist     dev     bowX     bowY
+     cold BEFORE belts (n=6)  +0.0037  0.0754  -0.0733  +0.1363
+     hot 60C                  +0.1190  0.2004  -0.3378  +0.0953
+     cold AFTER, now          +0.0010  0.0794  -0.0525  +0.1613
+   THE X BEAM BOW COMES BACK: -0.073 cold -> -0.338 hot -> -0.053 cold. Purely
+   thermal, elastic, no meaningful hysteresis. Confirms it as the bimetallic
+   bow rather than anything settling or yielding.
+   TWIST IS STILL ZERO, +0.0010 vs +0.0037 - and in between the belts came OFF
+   ENTIRELY, went back on at nearly 4x the tension (20 N -> 78 N), the couplings
+   were resynced twice, and the machine did a full 60C heat cycle. None of it
+   moved the frame geometry. The shim work of 25/08 is confirmed good.
+   SHAPE REPEATABILITY ACROSS ALL OF THAT: 17.6 um rms, deviation 0.079 vs
+   0.075. Use 17.6 um as the realistic cold repeatability figure across a
+   teardown, not the 5.3 um per-cell figure from six back-to-back runs.
+   The +36 um mean shift between the two cold sets is DATUM ONLY - G32/G30
+   re-establish it every run, so the absolute offset carries no information.
+   AT THE EDGE OF NOISE: bowY +0.136 -> +0.161, i.e. 25 um against a 17.6 um
+   repeatability. bowY was also the term still growing when the hot soak was
+   stopped. Might be residual, might be scatter. Watch it on the next soak;
+   do not chase it on one measurement.
+   Raw: hevort_project/survey_data/mesh_4x4_coldagain_20260826_*.csv
+
+RELATED OPEN ITEM - G31 IS A COLD NUMBER. Trigger height -0.030 was measured
+by slip gauge at ambient. The nozzle grows as the hotend heats: ~20mm of
+brass/steel at ~19 um/m/degC gives ~0.049mm from 20 to 150C and ~0.087mm to
+250C. So the cold value is out by roughly half a first layer against any
+realistic probing temperature.
+FIX WHEN THE HOTEND PT1000 IS REPLACED (currently a bare RTD foil-taped to the
+frame as a chamber sensor, so hotend temperature is unavailable and cannot be
+held): pick a standby temperature - 150C is sensible, below flow for most
+materials so no ooze while probing - measure the trigger height by slip gauge
+AT THAT TEMPERATURE, and always probe at it. The requirement is not that it is
+hot, it is that G31 and probing happen at the SAME temperature. The residual
+150->250C growth (~35-40 um) is a uniform Z shift and is what a per-material
+Z offset or babystep handles.
+Raw: hevort_project/survey_data/mesh_4x4_hot60_20260826_*_run{1,2,3}.csv
+
+=======================================================================
+*** RESOLVED 26/08/2026 - BEST STATE THIS MACHINE HAS EVER MEASURED ***
+=======================================================================
+TWO fixes, both Trev's diagnosis:
+
+1. BELT TENSION. Belts were ~20 N against a ~45-53 N requirement. Refitted with
+   belt taken up at the clamps (tensioners had run out of travel) and set by the
+   FREQUENCY method, not the RC2 meter - which tops out at 29.4 N, BELOW what
+   this machine needs and therefore useless here.
+      T = 4 L^2 f^2 mu ;  123 Hz on a 260mm span  ->  78.4 N
+   *** mu MEASURED 26/08/2026: 95 g over 496 cm = 0.01915 kg/m (19.2 g/m). ***
+   THIS IS NORMAL for a 12mm GT2 fibreglass belt (Gates GT2-LL). Worked from
+   geometry: 12mm x 1.38mm thick with 0.75mm teeth gives ~16 g/m of rubber plus
+   ~5 g/m of fibreglass cord = ~21 g/m. STEEL cord would be ~31 g/m, i.e. you
+   would notice. Nothing here suggests a counterfeit.
+   TWO EARLIER ERRORS IN THIS SECTION, both mine, both corrected:
+     - "45 N" used a table mu of 0.011 kg/m. That 9-11 g/m figure is for SIX
+       millimetre belt, not twelve. Wrong by 74%.
+     - "almost certainly STEEL CORD" followed from that same bad comparison.
+       It is fibreglass. RETRACTED.
+   The 78.4 N figure is unaffected - mu was measured, not assumed, so the tension
+   never depended on what the cord is made of.
+   Frequency targets on a 260mm span with the measured mu:
+       53 N -> 101 Hz    65 N -> 112 Hz    78 N -> 123 Hz    90 N -> 132 Hz
+   Requirement for a ~3kg gantry: T = m*a/4 minimum, m*a/2 recommended.
+   At 35 m/s^2 that is 26 N min, 53 N rec FOR A 3kg GANTRY - but 3kg was an
+   ESTIMATE and is the weakest number in the chain. At 4kg it is 35/70 N, at 5kg
+   43.8/87.5 N. The actual 78 N therefore sits right on the recommendation for a
+   4-5kg gantry, which is plausible for CNC towers + 12mm AWD + full toolhead.
+   The machine also measures its best ever at this tension. LEAVE IT. At the 8 m/s^2 the IS tests use it is
+   only 12 N - SO THE IS TESTS DO NOT EXERCISE TENSION AT ALL. If high-accel
+   travel matters, test at M201 X35000, not X8000.
+
+2. MOTOR PAIRS WERE FIGHTING EACH OTHER AT STANDSTILL. Found by Trev. With four
+   motors closed-loop on two belt pairs, their commanded positions could not all
+   be satisfied and the belts stored the difference as standing preload.
+   *** THIS IS A REASSEMBLY ARTEFACT, NOT A BUILD FAULT, AND IT WILL RECUR. ***
+   Trev confirms the motors were NOT fighting before the belts came off. It is
+   introduced by CLAMPING THE BELT with the paired motors at whatever phase they
+   happen to sit at. So it will happen again after EVERY belt refit.
+   *** ORDER MATTERS AND AN EARLIER VERSION OF THIS NOTE HAD IT WRONG. ***
+   SQUARE THE GANTRY MECHANICALLY FIRST, *THEN* RESYNC THE COUPLINGS.
+   Trev's finding, 26/08 late: the resync makes each motor's zero agree with
+   WHEREVER THE GANTRY HAPPENS TO BE. Do it on a racked gantry and the motors
+   stop fighting because they have accepted the skew as correct - zero error,
+   low idle PID, and THE RACK IS NOW THE REFERENCE. It silences the symptom and
+   cements the cause.
+   The 366 units of standstill fight WAS THE RACK expressing itself: opposing
+   signs WITHIN a pair means two motors on the same belt pulling against each
+   other, which is what a racked gantry demands of them. Resyncing took it
+   366 -> 64 -> 16, looking better each time, while the geometry stayed wrong.
+   Squaring the gantry mechanically then dropped a 400mm/s move from 227/240 to
+   140/148 - 35% of motor authority recovered - which no amount of resyncing had
+   achieved.
+   *** LOW IDLE PID IS NOT A GEOMETRY CHECK. *** It is exactly what a locked-in
+   rack looks like. Use belt_check (peak effort on a standard move) for that -
+   a racked gantry shows there and cannot hide.
+   Only accel_belt123hz_20260826 carries the original preload; data from before
+   26/08 does not.
+      driver   before err/PID      after       (1 full step = 0.2mm)
+      70.0    +0.718 / +101.6   -0.001 /  +0.7
+      71.0    -0.343 /  -90.4   +0.000 /  +9.5
+      72.0    +0.351 /  +90.5   +0.000 / +23.9
+      73.0    -0.113 /  -83.2   +0.000 / -29.5
+      total |PID| at standstill  366 -> 64   (-83%)
+   THE METHOD MATTERS AND MY FIRST VERSION WAS WRONG. Do NOT disable the motors,
+   slacken and re-clamp - that locks in the MECHANICAL rest position and the
+   fight returns on re-enable. Correct method (Trev's): motors ENGAGED AND
+   HOLDING, slacken the coupling clamp on the plain motor shaft one motor at a
+   time, let the controller walk its own error to zero, then re-clamp. That
+   makes the motor's zero and the mechanical position agree.
+   RESIDUAL: the Y pair (72/73) still opposes at ~10% of authority with ZERO
+   position error - a standing force, not a tracking error. A second pass did
+   not shift it, so it is most likely a small tension difference between the two
+   Y spans. Pluck each Y span separately to check. Not worth a strip-down.
+
+RESULT - EQUIVALENT DISPLACEMENT (um rms), the metric that matters:
+   state              mean total   spread across X
+   synced 45N run1       8.5        7.6 - 9.5
+   synced 45N run2       8.3        7.4 - 9.4
+   45N pre-sync          9.9        9.0 - 11.3
+   2.5 benchmark        10.4        7.6 - 14.2
+   1.9 dial            139.3       88 - 172
+20% better than the benchmark and far more uniform. X390, always the worst
+corner, went 14.2 -> 9.4. No clipping, no low-frequency modes, runs reproducible
+to 1.2%.
+
+*** USE DISPLACEMENT, NOT ACCELERATION RMS, TO COMPARE STATES. ***
+Acceleration rms weights harmless high-frequency content the same as damaging
+low-frequency content; displacement falls as 1/f^2, so at 218Hz a given
+acceleration moves the nozzle ~30x less than the same acceleration at 40Hz.
+Hours were wasted on 25/08 chasing a "35% worse than benchmark" gap that did not
+exist in displacement terms. Convert: d = a*9.81/(2*pi*f)^2.
+
+INPUT SHAPER: config.g has M593 P"zvd" F127. That was derived on a machine with
+slack belts and 366 units of standing preload - different hardware. The only
+genuine isolated structural resonance now is 146.9 Hz (147.7 at X10, 146.9 at
+X390, 100-200Hz centroid 144.7). => SET F147. The low-frequency displacement
+content (25-80Hz) is a diffuse smear, not a mode, and is not shaper-targetable.
+CONFIRM WITH A RINGING TOWER - f = speed / ringing spacing. A cruise-window
+accelerometer capture is not the proper way to identify a shaper frequency.
+
+STILL OPEN: weigh a length of belt to firm up mu and therefore the 45 N figure;
+re-check tension after a few hours running (these belts have stretched once
+already and dropping below 26 N returns to the bad band); Y-pair residual.
+
+=======================================================================
+BELT TENSION AND THE "THUMP" - 25/08/2026 EVENING. READ BEFORE CHASING IT.
+=======================================================================
+SUMMARY: an audible thump, position-locked, that appears below ~2.5 on the RC2
+meter and is COMPLETELY ABSENT at 2.6. Nothing mechanical was ever found, and
+an exhaustive search says nothing is broken. It is a slack-belt phenomenon.
+
+TENSION SERIES (is_xpos + is_diag, standard conditions):
+  tension   mean rmsY   127Hz (x10/x200/x390)   clip   peak Hz (x10/x390)
+   1.9       0.3413      0.032/0.048/0.038      25.3      39/39
+   2.3       0.3740      0.100/0.084/0.087      54.0      45/46
+   2.6       0.2047      0.109/0.106/0.197       0.0     125/124
+   2.5 bench 0.1485      0.032/0.048/0.047       0.0     149/125
+NOT a smooth trade-off. There is a BAD BAND below ~2.5 where a low-frequency
+gantry mode is live (39Hz at 1.9, 45Hz at 2.3) and gets WORSE as you approach
+from below - 2.3 is worse than 1.9. Above it the mode vanishes and the peak
+jumps to ~125Hz. DO NOT sweep upward in small steps from below; you are just
+buying more runs inside the bad band.
+
+WHAT THE MOTORS SEE (M569.5 closed-loop capture, the decisive measurement):
+At 250mm/s, belts 1.9, both Y motors error IN THE SAME DIRECTION at Y147.5:
+  +1.03 steps -> through zero -> -1.00 steps over ~7mm of travel
+  = +/-0.21mm, 0.41mm peak-to-peak, one cycle at ~36Hz
+  PID control signal slams from ~30 to 84 catching it
+  baseline tracking error is 0.023-0.026 steps - so this is 35-40x normal
+Same sign on both motors = PURE Y TRANSLATION of the gantry, not a rack.
+CRITICAL: a rail defect displaces the carriage in Z, which the X/Y motors
+CANNOT SEE. The motors see a disturbance ALONG THE DIRECTION OF TRAVEL.
+
+POSITION IS FIXED, SEVERITY IS NOT. Same forward sweep at four speeds:
+   speed    peak |err|  ratio   at Y
+   100        0.050      2.7x   (noise only)
+   150        0.118      6.3x   147.7
+   200        0.600     27.4x   148.3
+   250        0.832     33.6x   146.8
+Position does not move with speed -> NOT a frequency crossing driven by tooth
+passing. Amplitude jumps 5x between 150 and 200mm/s where v^2 predicts 1.8x.
+At 62.5mm/s the error envelope is DEAD FLAT across the whole travel - not a
+reduced bump, NO BUMP AT ALL. A fixed obstruction would still perturb at
+62.5mm/s. It does not.
+
+X MOVES HAVE THEIR OWN, SEPARATE ONE. X10->X380 at 250mm/s, captured at Y=70
+and Y=200, event at X=258.5 BOTH TIMES (peak 0.10-0.17, ratio 4.8-7.5x, much
+weaker than the Y one). Since X+Y and X-Y both differ between those two runs,
+it is NOT locked to either belt's phase.
+
+EVERYTHING ELIMINATED, WITH THE EVIDENCE:
+ - RAILS. Trev ran every carriage by hand end to end with the belts off:
+   "buttery smooth, absolutely no issues", including while deliberately racking
+   the gantry by pushing one side of the X beam. That also clears rail
+   parallelism and gantry squareness.
+ - BELTS. Removed and run section by section through the hands, both toothed
+   and smooth faces, no defect.
+ - ANYTHING ROTATING (idlers, pulleys, bearings). Ruled out BY ARITHMETIC: a
+   rotating feature repeats once per revolution, ~40mm of belt travel on a 20T
+   GT2, so it would fire 4-5 times per 195mm sweep. We see exactly ONE event
+   per sweep, every time. Idlers also checked by hand and spin freely.
+ - BELT-BORNE DEFECT. See the X-move result above. NOTE the earlier reasoning
+   that "a belt defect would land at a different sample each rep" was WRONG -
+   a closed belt's phase is locked deterministically to gantry position and an
+   out-and-back sweep restores it exactly. It was correctly refuted later by
+   the X+Y / X-Y test, not by that argument.
+ - CLOSED-LOOP CONTROL. Ran the whole thing in open loop (D2). Same position,
+   same absolute amplitude (1.02/1.63/1.13 vs 1.24/1.71/1.41). The ratio only
+   improves because spreadCycle baseline noise doubles. The controller is
+   neither causing nor amplifying it.
+ - UMBILICAL, KEY-BAK, ACCELEROMETER LEAD. Trev watched and physically held
+   both during moves. No effect.
+ - RAIL CLAMPING, SHIMS, TORQUE, TWIST. All ten screws loose vs torqued gave
+   identical results (0.4% apart, same samples). Twist -0.130 -> -0.047 changed
+   nothing.
+ - PUSHING THE GANTRY BY HAND does not reproduce it.
+
+BEST REMAINING EXPLANATION (fits everything, NOT proven): a MODE CROSSING.
+Free belt span lengths change continuously with gantry position, so each span's
+natural frequency sweeps as the gantry traverses. Where it crosses the gantry's
+own mode the two couple resonantly and the span dumps energy into the gantry.
+That gives a position fixed by geometry and tension but NOT by speed (matches),
+severity set by speed (matches), disappearance at higher tension as the crossing
+moves out of travel (matches), separate X and Y positions from different span
+geometry (matches), and nothing physically wrong to find (matches).
+
+BELT DEBRIS: a lot of it, on a machine that has never printed. Belt edges are
+clean, so flange rub was considered and dropped. Most likely normal EPDM
+bed-in shedding, exaggerated by the hundreds of full-travel 250mm/s moves this
+investigation required. Consistent with the tensioners running out of travel -
+stretch plus shed material is the break-in signature.
+
+STATE AT END OF DAY: belts REMOVED. Tensioners had run out of adjustment before
+reaching a usable tension, so belt must be taken up at the clamps. When
+refitting: wind tensioners back to MID-TRAVEL FIRST, then take up slack at the
+clamps, match by METER not by how much belt was pulled (path lengths differ by
+design - see project-long.txt BELT TENSION), then belt_settle, re-gauge,
+re-home. Aim 2.6-2.7 with tensioner left in hand so bed-in cannot walk it back
+down into the bad band.
+NEXT STEP: derive a MATHEMATICAL tension target rather than a dial reading.
+
+METHOD NOTES WORTH KEEPING:
+ - M569.5 closed-loop capture is far more diagnostic than the accelerometer for
+   this kind of work: it sees the drive axis directly, gives absolute position
+   error in steps (80 steps/mm, 16x microstep => 1 full step = 0.2mm), and A1
+   gives exact position mapping. Use D24 (Current Error + PID signal), R1500
+   S4000 covers a 195mm sweep down to 100mm/s. Phase Shift (1024) records as
+   all zeros on this firmware - do not bother asking for it.
+ - Two M569.5 captures cannot overlap: "Closed loop data is already being
+   collected" if the previous one is still writing. Leave a gap.
+ - M956 accepts S3000 and A1. Use A1 + S3000 for position work, not S1000 + A0.
+ - Baseline closed-loop tracking error on this machine is 0.023-0.026 steps.
+   That is a good health check after any drive work.
+
+!!!!! M18 BETWEEN EVERY MESH RUN. NON-NEGOTIABLE. 25/08/2026. !!!!!
+Leaving the motors energised between G32/mesh cycles corrupts the twist metric
+by up to 0.1mm. Three leadscrews can leave the bed STRAINED - racked against
+the screws - after G32 completes. Energised, that strain is held into the next
+cycle and compounds. M18 lets it relax to its natural rest so each G32 starts
+unstrained. Trev's call, and it fixed it outright:
+     M18 between runs      motors left ON
+     r1  +0.0010           +0.1020
+     r2  -0.0020           +0.0940
+     r3  +0.0100           +0.0010
+     mean  +0.0030         spread 0.1010
+     spread 0.0120
+     sd     0.0062   <- now matches the 4.2um per-point probe noise
+=> TWIST IS +0.003, INDISTINGUISHABLE FROM ZERO. THE CURRENT SHIM SET IS
+   CORRECT. NOTHING NEEDS CUTTING OR ADDING.
+=> RETRACTED: the "scale the schedule by 1.51" conclusion from earlier this
+   evening. The +0.098 that prompted it was held strain, not geometry.
+=> ALSO SUSPECT: every twist figure measured today with motors left on,
+   including the -0.130 and -0.047 that the 0.686 and 0.760 rescales were
+   derived from. Pairs of consecutive runs AGREEING PROVES NOTHING - tonight's
+   first two agreed at +0.102/+0.094 and were both wrong. Any future schedule
+   derivation must use M18-separated runs.
+ALSO CHANGED 25/08/2026: bed.g dive height 40mm -> 20mm (H40:2 -> H20:2 and
+G1 Z40 -> G1 Z20); 40 was excessive. Backup: hevort_project/survey_data/bed.g.bak-
+20260825-diveheight. Note bed.g's M558 is H-only and does NOT wipe G31 -
+verified triggerHeight still -0.0300 after many G32 cycles.
+Raw: hevort_project/survey_data/mesh_4x4_m18_dive20_20260825_*_r?.csv
+
+=== AS-BUILT STATE AT END OF 25/08/2026 - WHAT IS ACTUALLY ON THE MACHINE ===
+SHIMS: the 0.686-scaled TWO-PIECE set, two identical stacks per screw (one fore,
+one aft), all scissors-cut at exact nominal:
+   screw  rail mm   each side             total
+     1      37.5    nothing                0.00
+     2      87.5    0.03                   0.03
+     3     137.5    0.02 + 0.05            0.07
+     4     187.5    0.01 + 0.10            0.11
+     5     237.5    0.15                   0.15
+     6     262.5    0.03 + 0.15            0.18
+     7     312.5    0.02 + 0.20            0.22
+     8     362.5    0.01 + 0.12 + 0.15     0.28
+     9     412.5    0.01 + 0.12 + 0.20     0.33
+    10     462.5    0.12 + 0.12 + 0.15     0.39
+LATERAL: both rails re-set CENTRED on the 3030 with a depth micrometer used as
+a stop against the extrusion side face. The reference is DERIVED, not remembered:
+(30 - 12)/2 = 9.0mm each side for a 12mm rail on 30mm extrusion. MEASURE FROM
+BOTH EDGES at each fastener - if both read 9.00 the rail is centred AND the
+extrusion is on nominal; if they differ the rail is off-centre; if they sum
+wrong the extrusion is not 30.00. Referencing one edge only puts the extrusion's
++/-0.15mm width tolerance straight into rail position.
+TORQUE: 0.5 N.m both rails (changed from the earlier 0.30 N.m).
+BELTS: both 2.6 on the RC2 meter (build spec; note the 0.149 IS benchmark was
+taken at 2.5).
+LAST MEASURED TWIST: -0.047 at 16:11, BUT THAT IS STALE - it predates the rails
+coming fully loose at 16:54, the lateral re-centring, and the re-torque.
+=> NEXT MEASUREMENT NEEDED: cold 4x4. Accelerometer must come off first.
+
+!!!!!! CORRECTED 26/08/2026 - IT WAS BELT TENSION, NOT DEBRIS AND NOT RAILS !!!!!!
+The "debris got crushed out" explanation below is ALSO WRONG and is kept only
+to show the reasoning. Trev's correction, and it is right: DEBRIS DOES NOT GO
+AWAY AND THEN COME BACK, AND IT CANNOT APPEAR IN X-ONLY TRAVEL AT A FIXED X.
+It was slack belts from start to finish.
+The apparent "vanishing" at 17:20 with nothing touched was NOT a fragment being
+crushed. The rails had just been fully loosened, re-centred laterally and
+re-torqued - which changes the belt path geometry and therefore the tension.
+The drive got stiffer, so the same slack-belt symptom stopped showing. It came
+back the moment tension was dropped to 1.9.
+THE CONCLUSION "RAILS AND BLOCKS ARE FINE, DO NOT ORDER" STILL STANDS - it was
+confirmed independently later by hand-running every carriage with the belts off
+("buttery smooth"), including under deliberate racking. Only the MECHANISM was
+wrong.
+
+WRONG, KEPT FOR REASONING ONLY:
+!!!!!! RETRACTED 25/08/2026 17:20 - IT WAS DEBRIS, NOT A RAIL DEFECT. !!!!!!
+!!!!!! DO NOT ORDER RAILS. THE RAILS AND BLOCKS ARE FINE.            !!!!!!
+The "rail defect" conclusion below is WRONG and is kept only to show the
+reasoning. THE THUD VANISHED ON ITS OWN, with Trev away from the machine and
+nothing touched, after a few hundred passes over it:
+   state                    mean rmsY   X10      X390    peak Hz   clip
+   defect state 16:53         0.507    0.5078   0.5419    48.2     26-30
+   after, 17:2x               0.1996   0.1955   0.2794   124.0       0
+   benchmark 23/08            0.1485   0.1355   0.1642  149/125      0
+Confirmed twice: a full-travel Y10-Y380 sweep (|aY| envelope at Y140-180 fell
+from 1.33-1.62 to 0.16-0.32, 12 sweeps both directions both X) and the standard
+is_xpos/is_diag set. 48Hz gone, replaced by 124Hz - a normal structural
+frequency, not impact ring-down. Zero clipping.
+A brinelled rail CANNOT HEAL. It was a hard fragment sitting on the raceway -
+swarf, a foil sliver, grit - struck every pass until crushed flat or ejected.
+WHY THE WRONG CONCLUSION LOOKED SO SOLID, and the lesson: position-locked to
+the sample, immune to clamping state, ONE event with no ball-recirculation
+periodicity - every one of those is equally consistent with DEBRIS ON THE
+RAILWAY as with a damaged rail. Nothing distinguished them except TRANSIENCE,
+which only time revealed. IF A DEFECT LOOKS MECHANICAL AND PERMANENT, RE-TEST
+IT AFTER A FEW HUNDRED PASSES BEFORE SPENDING MONEY.
+STATE AT RETRACTION: all ten Y rail screws still LOOSE, so the 0.1996 is an
+unclamped measurement and not a final figure. Re-torque to 0.30 N.m and re-run
+for the real number. Remaining item to watch: X390 127Hz band 0.221 vs the
+benchmark's 0.047, and X10/X390 0.70x vs 0.83x - both measured loose, so not
+yet meaningful.
+Raw: hevort_project/survey_data/accel_afterdefectgone_20260825/ and
+     hevort_project/survey_data/accel_yrail_fulltravel_20260825/
+ALSO CONFIRMED THIS SESSION: THE X RAIL (MGN9H) IS CLEAN over the full 370mm
+travel, both directions - the only elevated regions are acceleration transients
+at 17-28mm into each move (mirrored X, not common X). Y rails are MGN12H.
+Raw: hevort_project/survey_data/accel_xrail_test_20260825/
+METHOD NOTE: M956 accepts S3000 and A1 ("activate just before the next move"),
+which removes command-latency guesswork and gives EXACT position mapping. Use
+A1 + S3000 for any position-localisation work - far better than S1000 + A0.
+
+WRONG, KEPT FOR REASONING ONLY:
+*** DECISIVE: ALL TEN RAIL SCREWS LOOSE AND THE THUD IS UNCHANGED. ***
+25/08/2026. Trev slackened every Y rail screw on both rails - the rail is not
+clamped, constrained or distorted by anything - and the noise is IDENTICAL:
+   state                     X     rmsY    clip   burst rms   burst sample
+   all screws LOOSE         10    0.5078   21.7     1.046     455,457,457
+   all screws LOOSE        390    0.5419   24.3     1.155     457,457,473
+   torqued 0.30 Nm          10    0.5057   22.0     1.074     457,457,472
+   torqued 0.30 Nm         390    0.5223   25.3     1.103     472,457,458
+0.4% apart at X10; same samples, same amplitude. CLAMPING IS IRRELEVANT.
+=> RULES OUT, DEFINITIVELY: shim thickness, shim geometry, shim material,
+   fastener torque, frame flatness under the rail, rail bow from
+   over-constraint, and twist. None of them can be the cause.
+=> IT IS THE RAILS/CARRIAGES THEMSELVES. Trev's own read, and it is correct.
+=> ALSO RETIRES THE ORIGINAL TORQUE INVESTIGATION'S PREMISE. The 22/08
+   "vibration falls monotonically as you loosen" result does NOT reproduce.
+   Whatever that measured, it was not this.
+ALSO NOTE the event is ABSENT AT X=200 TO THE EAR, not just to the sensor -
+total silence mid-span, loud thud at X10 and X390. All three sensor axes read
+1.00 at X200. So it is not a sensing node. The physical explanation is CoreXY
+LOAD TRANSFER: toolhead mass sits over the left carriage at X10, the right at
+X390, and is shared at X200 - so each carriage sees its heaviest and lightest
+load at opposite X extremes. A defect that only bangs under high (or very low)
+load reproduces this pattern exactly.
+ANSWERED - IT IS THE RAIL, NOT THE BLOCK. No feel test needed (motor detent
+through the belts makes hand-feel useless on this machine anyway). A damaged
+BALL or block raceway repeats every ball circuit (~40-60mm on MGN12, so 3-5
+hits per 195mm sweep). A damaged RAIL gives one hit at one place. Envelope over
+6 captures, whole sweep:
+   s 200  0.26 0.22 0.17 0.16 0.17 0.18 0.18 0.18 0.19 0.17
+   s 400  0.17 0.41 1.33 1.62 1.19 0.66 0.40 0.26 0.18 0.17
+   s 600  0.14 0.15 0.15 0.16 0.17 0.17 0.16 0.15 0.14 0.17
+   s 800  0.15 0.16 0.16 0.16 0.18 0.18 0.17 0.15 0.15 0.13
+ONE contiguous burst (samples 422-512), no periodicity anywhere else above 0.35
+correlation, rest of the sweep flat at baseline 0.16.
+LIKELY MECHANISM - STATIC BRINELLING AT A PARKED POSITION. Both rails damaged
+at nearly the same Y is what that looks like: gantry parked around Y158 took a
+load (knock, transit, something leaning on it) and both carriages pressed
+indentations into their rails at that spot. A running defect would not land on
+both rails at the same place by chance.
+ACTION: replace the rails, AND the blocks with them - every pass since has been
+hammering those balls into a dent at 250mm/s, which brinells the balls in turn.
+Reusing blocks on new rails risks carrying the fault across.
+
+SUPERSEDED, kept for reasoning - STILL TO DETERMINE - RAIL OR BLOCK? Free test, belts off, screws already loose:
+hand-run each carriage through Y150-170 and feel for the notch, then move the
+CARRIAGE to a different part of the rail and try again.
+   notch stays at Y~158        -> the RAIL raceway is damaged there
+   notch follows the carriage  -> the BLOCK is bad (brinelled ball, broken
+                                  recirculation, lost preload); rail may be fine
+Both sides make the noise, so if it is blocks that is two bad blocks - which
+points at handling (MGN blocks are easily wrecked by running them off the rail).
+
+*** BOTH Y RAILS HAVE A DISCRETE DEFECT AT Y~158-160. 25/08/2026. ***
+*** THE "48Hz MODE" WAS NEVER A MODE - IT IS RING-DOWN FROM AN IMPACT.  ***
+Trev heard a noise at the FRONT of the Y sweep, at X10 and X390 but not X200.
+Time-resolving the captures found a burst at:
+    X=10    peak sample 457, 457, 457   -> Y ~158mm
+    X=390   peak sample 473, 473, 473   -> Y ~160mm
+    X=200   no burst (its 165 is only the start transient)
+IDENTICAL TO THE SAMPLE in every capture = position-locked to ~0.16mm. A
+resonance cannot do that. This is the carriage striking a defect at one place
+on the rail; the 48Hz is the gantry ringing down afterwards.
+ - Y158 is MIDWAY BETWEEN screw 4 (Y132) and screw 5 (Y182) - NOT at a fixing,
+   so not shim- or clamp-related.
+ - BOTH rails have it, offset ~2.5mm from each other (16 samples).
+ - ALL clipping in the entire dataset falls in that one block.
+THIS IS WHY NOTHING WE CHANGED HELPED. Graded stacks, uniform 0.5mm on both
+rails, end-pinning, and twist -0.130 -> -0.047 all left it at ~0.31 mean rmsY.
+A rail defect is invariant to every one of those.
+PROOF - SWEEP THE CLEAN REGION INSTEAD (Y180-375, same 195mm length):
+    state                      mean rmsY  X10 peak  X390 peak  clip  X10/X390
+    benchmark 23/08 (Y98-293)    0.149     149.3     124.8      0      0.83x
+    defect region   (Y98-293)    0.307      48.2      49.0    29-33    0.94x
+    clean region    (Y180-375)   0.173     134.7     133.9      0      0.84x
+Zero clipping, no 48Hz, X10/X390 0.84x vs benchmark 0.83x, diagA/diagB 1.01x.
+=> THE SHIMMING WORKED. Twist +0.283 -> -0.047 and, away from the defect, the
+   vibration is benchmark-class. Keep that work.
+=> The left/right asymmetry this whole investigation started from is RESOLVED.
+LOCATION: ~213mm from the FRONT END of each rail (machine Y + 55), +/-10mm on
+the absolute (depends on a ~30ms command-latency assumption; the repeatability
+is exact, the absolute is not). To pin it: repeat the sweep at 25mm/s, which
+cuts the latency error to under 1mm. Then belts off, run each carriage by hand
+through that region and feel for the notch - brinelled ball track, dent, or
+debris in the raceway.
+NOTE this was the original 23/08 recommended next step ("remove one Y rail,
+check its straightness off the machine, unclamped") which got SKIPPED when
+shimming appeared to work. It probably also underlies the old "no torque sweet
+spot, vibration falls monotonically to zero clamping" result - a loose rail can
+float over a defect, a clamped one cannot.
+*** IF THE RAILS ARE REPLACED, SECTION 3 IS VOID. New rails = new geometry;
+    the whole schedule must be re-derived. DO NOT CUT TO IT FIRST. ***
+Raw: hevort_project/survey_data/accel_cleanregion_Y180_375_20260825/
+
+*** FINAL SCHEDULE, DERIVED FROM TWO SAME-TORQUE POINTS - 25/08/2026 ***
+This supersedes every earlier scaling. It is the FIRST derivation that uses two
+shim states measured at the SAME torque (0.30 N.m) with the same script, so it
+carries none of the historic clamp-state contamination.
+    state                       dS       dD
+    0.686 schedule            0.4815   -0.1295
+    two-piece 0.686 set       0.3369   -0.0465   (runs -0.0440/-0.0490, spread
+                                                  0.005, well inside noise)
+    => sensitivity k = 0.574
+    => dS for zero twist 0.2559 -> scale THAT set by 0.760
+k = 0.574 INVALIDATES BOTH EARLIER ESTIMATES (0.857 from the historic baseline,
+0.691 from geometry). Back-solving, k=0.574 says the unshimmed state should have
+read dD = +0.147; the 23/08 measurement said +0.283. That gap is direct proof
+the 23/08 baseline was a DIFFERENT CLAMP STATE. NEVER SCALE FROM IT AGAIN.
+
+ screw  rail mm   each side       total   predicted
+   1      37.5    nothing          0.00
+   2      87.5    0.02             0.02
+   3     137.5    0.05             0.05
+   4     187.5    0.03 + 0.05      0.08
+   5     237.5    0.12             0.12
+   6     262.5    0.01 + 0.12      0.13
+   7     312.5    0.02 + 0.15      0.17
+   8     362.5    0.01 + 0.20      0.21
+   9     412.5    0.05 + 0.20      0.25
+  10     462.5    0.10 + 0.20      0.30    dS 0.2591, twist -0.002
+Two identical pieces per screw, fore and aft - see method below.
+NEARLY ALL PIECES ALREADY EXIST from the previous set. Only shortfall:
+    0.05  need 6, have 2  -> cut 2 more blanks
+    0.20  need 6, have 4  -> cut 1 more blank
+CAVEAT: this is an EXTRAPOLATION (0.081 below the nearer measured point,
+against a 0.145 gap between the two points), not an interpolation. Expect it
+close but allow for a residual 0.01-0.02 needing one trim. A third point makes
+the fit very well determined - log it if a trim is needed.
+
+TWO-PIECE SHIM METHOD (CURRENT) - 25/08/2026
+Per fixing, TWO identical plain rectangles, 12mm (full rail width) x ~8mm,
+one fore and one aft of the screw. No slot, no drilling, nothing captured on
+the shank.
+   screw  rail mm   stack (EACH side)      each   target   err
+     1      37.5    nothing (datum)        0.00   0.000   +0.000
+     2      87.5    0.03                   0.03   0.033   -0.003
+     3     137.5    0.02 + 0.05            0.07   0.069   +0.001
+     4     187.5    0.01 + 0.10            0.11   0.110   +0.000
+     5     237.5    0.15                   0.15   0.153   -0.003
+     6     262.5    0.03 + 0.15            0.18   0.176   +0.004
+     7     312.5    0.02 + 0.20            0.22   0.224   -0.004
+     8     362.5    0.01 + 0.12 + 0.15     0.28   0.276   +0.004
+     9     412.5    0.01 + 0.12 + 0.20     0.33   0.332   -0.002
+    10     462.5    0.12 + 0.12 + 0.15     0.39   0.391   -0.001
+   TOTAL both sides: 0.01x6 0.02x4 0.03x4 0.05x2 0.10x2 0.12x8 0.15x8 0.20x4 = 38
+   Predicted residual twist +0.006mm. All scissors-cut at exact nominal.
+RULES FOR THIS METHOD:
+ - BOTH SIDES OF A FIXING MUST BE IDENTICAL. A fore/aft thickness difference
+   does not average out - it pitches the rail about that screw. Cut each
+   fixing's stack as a DOUBLE-LENGTH taped blank then cut it in half; the two
+   halves are then identical by construction.
+ - ORIENT FORE-AND-AFT along the rail, each piece full 12mm rail width. NOT
+   left/right across the rail - that leaves two ~4mm strips with the rail
+   bridging unsupported between them.
+ - NOTHING RETAINS THEM. Unlike a slotted horseshoe on the shank, loose
+   rectangles can slide out or be pushed aside as the rail settles. VERIFY
+   BOTH PIECES ARE SEATED AT EVERY FIXING BEFORE TORQUING - a missing one is
+   a 0.39 error at the worst place and reads exactly like a schedule failure.
+ - Screw 5/6 overlap constraint no longer applies at ~8mm long.
+ - Mechanically better than the notch: support is symmetric about the screw
+   instead of material removed where clamping pressure peaks.
+
+HISTORIC - SLOTTED METHOD, NO LONGER USED:
+SHIMS MUST BE SLOTTED, NOT DRILLED. The screws cannot be withdrawn - they
+thread into nuts that lose their position if removed. So each shim is a
+horseshoe: 12mm (full rail width) x ~20-25mm, with a 3.2-3.5mm slot cut in
+from a LONG edge to just past the centreline, sliding in perpendicular to the
+rail from the side. Same side for all ten. Sliding in along the rail axis is
+blocked by the neighbouring screw.
+INSERTION: do NOT do one fastener at a time - lifting 0.57mm at the rear with
+tightened neighbours 50mm away would bend the rail 0.57mm over 100mm. Slacken
+ALL TEN about three turns (M3 x 0.5 pitch = ~1.5mm float, screws stay in their
+nuts and keep the rail located laterally), slide all shims in, then torque
+front to back at 0.30 N.m. Count turns out so nothing backs out of a nut.
+Screws 5 and 6 are only 25mm apart - trim those two pieces to ~20mm long so
+they cannot overlap or ride up on each other.
+
+REVISED 25/08/2026 against the shim stock as actually mic'd. The previous USE
+column assumed coarse 0.05 steps and carried errors to +0.023 (#7) and -0.020
+(#10) - a 0.043mm peak-to-peak distortion deliberately built into the rail.
+With 0.01 and 0.02 foil in hand every fixing lands within 0.006mm, p-p 0.010,
+which is BELOW the 0.013mm cold-mesh repeat noise floor (section 2). The shim
+error is now smaller than our ability to measure it.
+Max 3 layers, 18 pieces total. Per-thickness count:
+  0.01 x1   0.02 x1   0.03 x2   0.05 x2   0.10 x2
+  0.12 x1   0.15 x3   0.20 x2   0.30 x4
+One 150x50mm sheet of each covers this several times over.
+
+RULES
+- Shims must span the FULL 12mm rail width. Washer-sized shims let the rail
+  bridge and deform locally - defeats the point and wears the bearings.
+- Grade it, never step it. Every fixing gets its own thickness.
+- Fastener 1 gets nothing. All correction added going rearward.
+- Do NOT shim the left rail. Do NOT shim the X beam (section 1b).
+- Fasteners 1 and 10 are extrapolated beyond the probed Y16-380. #10 is the
+  largest in the stack - check it with an indicator once the rail is back on.
+- Re-measure everything after shimming; the shim changes what these describe.
+
+ORDER
+  ORDERED 22/08/2026: OLYCRAFT 27pc 304 stainless shim assortment, 150x50mm
+  sheets, thicknesses 0.01/0.02/0.03/0.05/0.1/0.12/0.15/0.2/0.3mm, 3 of each.
+  ARRIVED 25/08/2026, unlabelled, mic'd and confirmed on nominal. No 0.4mm
+  sheet, but with 0.01/0.02 available that no longer costs anything - see the
+  revised build column above. Max 3 layers.
+  Cut to 12mm wide (full rail width) x ~25mm.
+  Each sheet yields ~24 pieces, so there is ample material for remakes.
+  Do NOT use polymer/plastic shim packs - they creep under bolt preload.
+  replacement hotend PT1000 (M3 screw-in) - the current one is a bare RTD, now
+  foil-taped to the frame as a temperature probe; hotend temp is unavailable
+
+-------------------------------------------------------------------------------
+4. OPERATING PROCEDURE
+-------------------------------------------------------------------------------
+SOAK CRITERION - do NOT use frame temperature. temp0 flattens long before the
+machine does; it read +0.03 C/min with the machine still 0.44mm from
+equilibrium. The frame is only partly insulated, so different members have
+different time constants and no single sensor can represent it.
+Use the Z DATUM instead - it integrates the whole loop. Probe bed centre with
+G30 S-1 every 3 min and wait for it to stop moving.
+NOTE THE DATUM OVERSHOOTS AND COMES BACK: it peaked 10 min before reversing at
+~2 microns/min during the 60C soak. Bed and Z system warm first (datum up), then
+the towers catch up (datum down). A criterion that waits for "stopped changing"
+will fire twice - once near the peak, once for real.
+
+MESH: the ALPS cannot complete a large mesh in a hot chamber - it latches
+"probe already triggered" after ~21-25 points. Known behaviour of this probe.
+Use 4x4 hot. A cold 7x7 is fine.
+
+SYNTHESISED HOT MESH: fine 7x7 cold, coarse 4x4 hot, subsample the cold map at
+indices 0,2,4,6 in both axes (the 4x4 points are an exact subset), take the
+difference, bilinear-interpolate up to 7x7, add to the cold map, recall with
+G29 S1. Re-datum hot regardless - G29 S1 restores shape, not Z0.
+The recalled map dies if the FR4 is lifted. Clip or magnetically hold it.
+
+-------------------------------------------------------------------------------
+5. TRAPS - ALL OF THESE COST HOURS
+-------------------------------------------------------------------------------
+- M558 SILENTLY WIPES THE G31 TRIGGER HEIGHT. Any runtime M558 reset it from
+  -0.030 to an old 0.700 placeholder while config.g still read -0.030. Every map
+  taken in that window was displaced 0.73mm. ALWAYS re-issue G31 after M558, in
+  that order. Verify: M409 K"sensors.probes[0]" -> triggerHeight must be -0.030.
+- G30 S-1 reports the RAW trigger height; G29 stores it with G31 Z already
+  subtracted. Comparing the two directly looks like a 0.7mm fault and is not one.
+- RRF heightmap row 0 = Ymin = FRONT.
+- Heightmap positive = bed reads HIGH = the gantry sits LOW there.
+- bed.g's final centre G30 can fail silently and leave the datum unset, which
+  displaces a whole map while reporting success. The result check is now in
+  bed.g - keep it.
+- PHYSICAL E-STOP HELD IN = the board is held in boot and reports state
+  "starting", not "idle". That is NOT a DCS fault - it is the lockout working.
+  M999 with the E-stop still depressed does not release it; it just quiets the
+  fans. Release the button before expecting the machine to come back.
+  This is the safest state for working in the belt path - hardware lockout,
+  not software (26/08/2026).
+- DO NOT DRIVE THIS MACHINE WITH ONE "CodeConsole -c" PER COMMAND. Each
+  invocation opens a fresh socket to DCS, allocates a code channel and tears it
+  down. Dozens in tight loops correlate with the unexplained M112 halts, and the
+  event log caught the mechanism: "Transfer timeout waiting for TfrRdy (waited
+  504ms, 0 glitches)" - the Duet too busy to answer, not electrical noise.
+  Halts only ever occurred during direct machine control, never in normal use.
+  Batch commands down ONE connection instead:
+      printf 'M114\nM409 K"state.status"\n' | CodeConsole
+  SbcTransferTimeout also raised 500 -> 2000ms in /opt/dsf/conf/config.json
+  (bak: config.json.bak-timeout). Needs a duetcontrolserver restart, not M999.
+- M929 event logging is now enabled (eventlog.txt, on the SD card, survives
+  reboots). Added after repeated unexplained M112 halts with no persistent log.
+- Rebooting the Pi does NOT reset the Duet - it has its own power, and config.g
+  does not re-run. Use M999.
+- chamber_abort.g sets chamberSP=0, which makes chamber_heat.g's wait condition
+  immediately false, so it exits the normal way and never clears chamberAbort.
+  Still unfixed.
+- daemon.g line 49: `if { var.plcRegs != null }` throws "unknown variable" when
+  the Modbus read fails, aborting the file. Needs exists() guarding it.
+
+-------------------------------------------------------------------------------
+6. CONFIRMED GOOD - DO NOT RE-INVESTIGATE
+-------------------------------------------------------------------------------
+M92 Z800 correct (caliper-verified). G31 -0.030 correct (slip gauge, +/-0.005).
+Probe type P9 is load-bearing - P5 stops the enable macros running and kills the
+probe. Driver map: 0.0 = front-right, 0.1 = rear, 0.2 = front-left, matching
+M671. Front rails are level and are the datum. Both rails crown ~0.2mm common
+mode - real, but it induces no roll and the mesh handles it.
+
+===============================================================================
+BARE-GRANITE DATUM AND THE MACHINE/STONE ASTIGMATISM SPLIT - 29-30/08/2026
+===============================================================================
+Nine 7x7 meshes over one night and the following morning, all via G29 (mesh.g),
+M18 between every run, T3000 A8 S0.02 throughout. A tenth was taken at T12000
+after the travel speed was raised - see TRAVEL SPEED at the end of this
+section; it changes nothing, so all ten are comparable. Decomposed with the same
+least-squares model as section 4 above (c + tiltX.u + tiltY.v + bowX.u^2 +
+bowY.v^2 + twist.uv, u,v normalised to [-1,1], terms quoted peak-to-peak). The
+fit reproduces this file's published benchmark decomposition exactly - bowY
+0.125, bowX 0.078, tiltY 0.047, tiltX 0.038, twist 0.012, rms 0.029 - so these
+numbers are directly comparable to the ones above.
+
+WHY THE FR4 HAD TO COME OFF
+The sheet is laid LOOSE and it dominates the twist term. Rotating it 30/08
+moved twist from -0.083 to +0.152, a 0.235mm swing; the same test on 22/08 moved
+it 0.256mm. Merely lifting and re-seating it in the SAME orientation moved 22/08
+by 0.040. The sheet was also lifted and lightly SANDED on 29/08, so every
+heightmap taken before that date describes a surface that no longer exists.
+CONSEQUENCE: mesh twist cannot verify frame geometry while a loose sheet is on
+the bed. The rail-shim verification criterion has been struck from project.txt
+item 16 for this reason - see the shim note below.
+
+THE THREE DATUMS (bare granite, FR4 removed)
+                    NIGHT 02:27    MORNING 10:05   ROTATED 90 CCW 10:48
+                       23.6C           22.1C            22.1C
+   mean              +0.1013         +0.1111          +0.1112
+   deviation          0.1260          0.1272           0.0973
+   bowY              +0.3195         +0.3255          +0.2067
+   bowX              -0.0495         -0.0319          +0.0873
+   twist             +0.0064         +0.0159          +0.0835
+   rms                0.0161          0.0171           0.0158
+   G32 residual   0.0025/0.0063/0.0016   0.0034/0.0014/0.0055   0.0051/0.0026/0.0092
+
+NOISE FLOOR, and it is the number that was always missing:
+   soaked (morning)  mean +/-0.0016  dev +/-0.0021  bowY +/-0.0057  rms +/-0.0004
+   end-of-session    mean +/-0.0168  dev +/-0.0032  bowY +/-0.0079  rms +/-0.0011
+TAKE REFERENCE MESHES AFTER AN OVERNIGHT SOAK. The soaked set is 2-10x tighter
+on every term. Anything smaller than the soaked spread is not a change.
+
+bowX MOVED -0.0495 at 23.6C -> -0.0319 at 22.1C between those two datums, and
+this file previously called that thermal at ~0.012/degC. THAT ATTRIBUTION IS
+WITHDRAWN. Later the same day, on the rotated slab, the chamber rose 22.1 ->
+23.6C and bowX moved only -0.0034 - about -0.002/degC, opposite in sign and six
+times smaller. A coefficient cannot be read out of a 1.5C window; the earlier
+difference was more likely slab state or ordinary spread. The documented
+cold-to-hot bimetallic bow over ~37C (-0.070 to -0.349) is solid and unaffected.
+Still worth quoting bowX with a temperature, but do not use 0.012/degC.
+bowY did NOT move: +0.3195 -> +0.3255 over eight hours and 1.5C, inside noise.
+
+THE 90 DEGREE ROTATION - MACHINE vs STONE
+A quarter turn swaps the stone's two curvature axes while the machine's share
+stays put. bowY fell 0.1188 and bowX rose 0.1192 - equal and opposite to 0.4um,
+which is the signature. Solving both ways round:
+   stone astigmatism   bowY-bowX = 0.119   (0.3255-0.2067, and 0.0873-(-0.0319))
+   machine astigmatism bowY-bowX = 0.238   (0.3255-0.0873, and 0.2067-(-0.0319))
+Two independent derivations agreeing to 1um. SO THE SADDLE IS ROUGHLY TWO-THIRDS
+MACHINE, ONE-THIRD STONE. The 0.119 stone figure matches this file's existing
+0.114mm granite astigmatism. The 0.238 machine figure matches section 6's
+already-recorded "both rails crown ~0.2mm common mode" - that crown IS the
+machine's bowY, arrived at by a completely independent route.
+
+THE MACHINE SHARE IS MOUNTING-INDEPENDENT. bed.g probes X398 Y16, X201 Y380,
+X2 Y16, which track the M671 actuator geometry and therefore the three points
+the slab rests on whatever holds it there. The item 8 mounting decision does not
+change it, and 0.238 carries across to the replacement slab.
+
+16 MICRONS OF THE MAP IS THE MACHINE, NOT THE SURFACE. Residual rms after
+removing the model is 0.0155-0.0171 across all nine runs. Correlating the
+residual before and after the 90 turn: unrotated +0.706, rotated +0.618 and
+-0.148. It did NOT travel with the stone, so it is probe and rail behaviour,
+not surface texture. That is the floor on what a mesh of ANY bed can resolve
+here. It also means the rotation direction cannot be recovered from the data -
+the quadratic terms are identical for CW and CCW by symmetry, and the residual
+does not rotate. Direction was anticlockwise, from Trev, not from the maps.
+
+TWIST: STILL GONE. +0.0064 and +0.0159 on the unrotated bare granite, against
+~0.28 before the shim. Measured three times, on bare stone, with the loose sheet
+removed as a variable - the cleanest twist figures this machine has produced.
+The rear-right shim is sound. The static 4x4 evidence for it (0.283 -> 0.011,
+23/08) was taken through the FR4 and is contaminated; the dynamic 127Hz result
+never touched the bed and remains the shim's real proof.
+
+TRAVEL SPEED RAISED TO 200 mm/s, 30/08/2026 - NO EFFECT ON THE MEASUREMENT
+M558 T was 3000 mm/min (50 mm/s), a tenth of what the machine is validated to.
+Raised to T12000 (200 mm/s) in config.g line 76 AND mesh.g line 57 - mesh.g
+restates M558, so changing config.g alone leaves meshes running at the old
+speed. bed.g needs no edit: its M558 K0 H20:2 MODIFIES the probe rather than
+recreating it, so G32 inherits T from config.g (confirmed in the object model,
+travelSpeed 12000 with diveHeights/speeds/tolerance all preserved).
+
+T does NOT touch Z. It also sets the post-probe Z lift, but M203 Z1000
+(16.7 mm/s) and M201 Z20 cap that far lower, so Z behaves exactly as before.
+
+T DOES NOT AFFECT G32 EITHER, and the reason matters. bed.g codes every travel
+EXPLICITLY - G0 X398 Y16 F9000, G0 X201 Y380 F9000, G0 X2 Y16 F9000 and the
+closing G1 to centre, all at F9000 = 150 mm/s hardcoded (bed.g lines 42, 49, 56,
+75). M558 T only governs travel moves RRF generates for itself; by the time each
+G30 P<n> X Y runs the head is already at the point. So G32's travel speed is a
+bed.g constant, not a probe setting, and raising T cannot change it. To speed
+G32 up, edit those four feedrates - not T.
+
+VERIFIED NOT TO AFFECT THE MAP. One 7x7 at T12000 against the three-run T3000
+datum on the same rotated slab, all six terms inside the run-to-run spread:
+                    T3000 datum   spread    T12000     delta
+   mean               +0.1112     0.0113    +0.1146   +0.0034
+   deviation          +0.0973     0.0007    +0.0978   +0.0005
+   bowY               +0.2067     0.0089    +0.2124   +0.0057
+   bowX               +0.0873     0.0046    +0.0908   +0.0035
+   twist              +0.0835     0.0119    +0.0821   -0.0015
+   rms                +0.0158     0.0010    +0.0157   -0.0001
+rms matching to 0.1um is the telling one - arriving four times faster changed
+the settled probe reading not at all. M558 R (recovery time) is still 0 and did
+not need raising.
+
+G32 TRAVELS ALSO RAISED TO 300 mm/s (bed.g F9000 -> F18000, all four moves),
+30/08/2026. G32 fell 84s -> 75s and the grid phase did not move (240s vs 237s),
+which is the control - bed.g feedrates cannot reach G29 S0. KEPT.
+
+THE TWIST STEP, AND WHAT IT ACTUALLY WAS. Immediately after the F18000 edit,
+twist moved from ~0.083 to ~0.109 and stayed there across three runs with a
+spread of only 0.0045. It looked like the feedrate. It was not:
+   G32 @150 (datum, n=3)        twist +0.0835   spread 0.0119
+   G32 @300 (n=3)               twist +0.1087   spread 0.0045
+   G32 @150 REVERTED (n=2)      twist +0.1071   spread 0.0039
+Reverting did NOT bring it back, so the twist step is a real one-time change of
+state, not a per-run effect of the feedrate. Twist is plane-invariant, so G32 -
+which only sets a plane - cannot alter measured twist however fast it moves.
+
+WHAT MOVED THE BED IS NOT KNOWN. An earlier version of this section said the
+slab "re-seated under the harder acceleration". THAT WAS AN ASSUMPTION AND IS
+WITHDRAWN - it was inferred from a step in the data coinciding with the edit,
+and nobody observed it. Trev's correction, 30/08/2026: the bed has been SEEN to
+move exactly once, later the same day with the FR4 back on and fixed down, and
+it moved ON THE Z PROBE - not on a travel move. The probing force is the
+mechanism actually observed; the ALPS is a strain gauge, so the nozzle presses
+on the bed until it triggers, and an unrestrained stack can be pushed by that.
+Travel speed remains unimplicated by any observation. Both speed increases were
+kept on Trev's call once it was confirmed no Z feedrate had changed.
+
+THE OBSERVED EVENT, for the record: 15:09:55 30/08, mid-grid, "G29: Probe was
+not triggered during probing move". CAUSALITY, per Trev who watched it: THE
+PROBE FAILED TO TRIGGER AND THE MACHINE KEPT DRIVING Z DOWN. The nozzle drove
+into the bed and pushed it. The bed movement is the CONSEQUENCE of the probe
+failure, not its cause - an earlier version of this note had that the wrong way
+round and said the surface had moved away from the datum first. It had not.
+
+THIS IS THE DANGEROUS FAILURE MODE ON THIS MACHINE. A strain-gauge probe that
+does not fire has nothing to stop the Z move; it is not like a switch that is
+merely late. Whatever the trigger cause, the outcome is the nozzle loaded into
+the bed until a human intervenes. Trev stopped it manually.
+
+mesh.g's own guard (lines 68-70) caught the resulting error, ran M561 and
+refused to save, so no bad map was written - but note the guard fires AFTER the
+damage, not instead of it. It is worth keeping exactly as it is; it is not a
+safety device.
+
+TWO CONSEQUENCES:
+ 1. LET THE SLAB SETTLE BEFORE TAKING A DATUM. The rotated datum was taken
+    within 20 minutes of the stone being turned and is the LOOSEST set of the
+    three (twist spread 0.0119). The settled state is the tightest anything has
+    measured: mean +/-0.0009, dev +/-0.0004, bowX +/-0.0008, rms +/-0.0002.
+    Settling took hours and a lot of machine motion, not minutes.
+ 2. THE ASTIGMATISM SPLIT IS UNAFFECTED. bowY reads 0.2067 / 0.2049 / 0.2081
+    and bowX 0.0873 / 0.0875 / 0.0839 across all three states - only twist
+    moved. The 0.238 machine / 0.119 stone split stands.
+
+TIME SAVED, same machine, same slab, M18 before each:
+   G32 (tram)        ~85s  ->  84s    no change
+   grid, 49 points  ~294s  -> 237s    -57s, 19%
+   total M18->saved ~400s  -> 371s    -29s
+G32 not gaining is FULLY EXPLAINED: its travels are bed.g's own F9000 moves and
+were never affected by T. See the note above. An earlier draft of this section
+called it unexpected - it is not.
+
+WHERE G32's ~84s ACTUALLY GOES, two iterations:
+   travel   6 legs, ~1226mm per iteration at 150 mm/s        ~16s
+   dwells   6x G4 P250 per iteration, plus P500 and P1000     ~4s
+   probing  H20:2 - the FIRST probe at each point dives 20mm
+            at F600 (10 mm/s), so ~2s down plus retract, six
+            times, before any A8 repeats at 2mm             ~40s+
+The H20 arrival dive is the dominant cost, and it is deliberate: an untrammed
+bed can sit further out than the normal H5 window (bed.g lines 21-27). Raising
+the four F9000s to F12000 would save only ~4s of the 84. Not worth it; the dive
+height is where the time is, and it is there for a reason.
+
+FR4 BOLTED DOWN - MEASURED 30/08/2026
+NOTE ON THE FIRST THREE RUNS BELOW: they were taken with only 4 of the 8
+perimeter bolts fitted. Trev fitted the remaining four at ~15:45 and the map
+changed measurably. The 4-bolt figures are kept for the comparison they give,
+but THE 8-BOLT FIGURES AT THE END ARE THE PRODUCTION STATE.
+The sheet was re-fitted and FIXED DOWN (bolted, not bonded - the FR4 is never
+bonded; it is drilled from the granite pattern and screwed to the M3 Flow-Serts,
+project.txt item 7 steps a and d, so THIS ARRANGEMENT IS THE PRODUCTION ONE, not
+a temporary rig). Three 7x7s, M18 between, chamber 23.7C:
+
+                 run1      run2      run3      MEAN   spread | bare granite
+   mean       -0.0883   -0.0898   -0.0991   -0.0924   0.0108 |      +0.1216
+   deviation  +0.0849   +0.0799   +0.0807   +0.0818   0.0050 |      +0.0991
+   bowY       -0.0059   -0.0053   -0.0018   -0.0043   0.0041 |      +0.2081
+   bowX       -0.1418   -0.1322   -0.1325   -0.1355   0.0096 |      +0.0839
+   twist      -0.0157   -0.0104   -0.0082   -0.0114   0.0075 |      +0.1071
+   rms        +0.0406   +0.0403   +0.0433   +0.0414   0.0029 |      +0.0163
+
+BOLTING THE SHEET DOWN KILLS bowY. +0.208 bare -> -0.004 fixed, repeatable to
+0.004. The 0.32mm Y bowl that dominated every map for two days is a property of
+the STACK, not the machine, and clamping removes it. Deviation improves
+0.099 -> 0.082. Twist returns to ~-0.011.
+
+THE COST IS LOCAL STRUCTURE. rms goes 0.016 -> 0.041, repeatable to 0.003, so it
+is real and not crash damage (the nozzle drove into the bed at 15:09 that day;
+5mm FR4 does not mark, per Trev). bowX also grows +0.084 -> -0.136. The trade is
+a large SMOOTH bow, which a mesh compensates well, for a smaller bow plus 41um
+of local irregularity BETWEEN probe points, which a mesh compensates badly.
+
+THIS GRID CANNOT RESOLVE THE CAUSE. 7x7 is 63mm spacing; anything finer aliases.
+The residual is edge-weighted (X10 and X390 run positive toward the rear, +72,
++101, +56; lows through the middle band at Y139, -70, -91) which reads more like
+the sheet pulled down centrally and lifting at the edges than like discrete
+dimples at fixings - but that reading is not supported at this sampling density.
+A P13:13 run (25mm spacing, ~15 min) would settle it. mesh.g's own comment says
+to raise density exactly when the map shows structure between existing points,
+which is now the case. NOT YET DONE.
+
+ALL 8 PERIMETER BOLTS FITTED - 30/08/2026, runs at 15:56 and 16:02
+Two runs, M18 between, agreeing to 0.003 on every term:
+                     4 bolts (n=3)    8 bolts (n=2)     change
+   mean                  -0.0924         -0.1191       -0.0267
+   deviation             +0.0818         +0.0682       -0.0136
+   bowY                  -0.0043         -0.0052        0.0000
+   bowX                  -0.1325         -0.0909       +0.0440
+   twist                 -0.0114         +0.0192       +0.0300
+   rms                   +0.0414         +0.0556       +0.0142
+
+MORE CONSTRAINT FLATTENS THE SMOOTH TERMS AND ADDS LOCAL STRUCTURE. Deviation
+falls 17% and the X arch a third; the sheet is pulled 27um closer to the stone.
+rms rises 34%, which is what clamping at more discrete points does between the
+fixings. bowY does not move - the first four bolts had already flattened it from
++0.208 (bare granite) to -0.004, and the second four add nothing there.
+
+DEVIATION 0.0682 IS THE BEST FIGURE OF THE WHOLE SESSION - better than bare
+granite (0.099), better than 4 bolts (0.082), and effectively equal to the old
+23/08 benchmark of 0.0667 which was taken on a LOOSE sheet.
+
+CONFIRMED AS A DATUM, n=3. A third run at 18:27 - two and a half hours after the
+second - reproduces both:
+               r4        r5        r6      MEAN    range
+   mean    -0.1206   -0.1176   -0.1096   -0.1159   0.0110
+   dev     +0.0681   +0.0684   +0.0682   +0.0682   0.0004
+   bowY    -0.0061   -0.0043   +0.0021   -0.0028   0.0083
+   bowX    -0.0894   -0.0923   -0.0852   -0.0890   0.0071
+   twist   +0.0185   +0.0198   +0.0166   +0.0183   0.0032
+   rms     +0.0564   +0.0548   +0.0543   +0.0551   0.0021
+G32 residuals 0.0034 and better throughout.
+
+DEVIATION REPRODUCES TO 0.0004mm ACROSS 2.5 HOURS - the tightest figure measured
+in this whole exercise, on any configuration. THE ASSEMBLY IS NOT SETTLING: an
+earlier note here suggested it might be, by analogy with the slab after
+rotation. It is not - the state held for 2.5 hours unchanged. The 15:38 -> 15:56
+step was the four extra bolts and nothing else.
+
+USE THIS AS THE BED BASELINE while the temporary slab is in:
+   mean -0.116  dev 0.068  bowY -0.003  bowX -0.089  twist +0.018  rms 0.055
+Measured at chamber ~23.7C. bowX is the term to expect movement in with
+temperature (see the bimetallic bow above); the others held.
+
+===============================================================================
+POST-BRAKE-REWIRE STATE - 31/08 to 01/09/2026
+===============================================================================
+Machine is in a TEMPORARY POSITION throughout this section. Hardware changes in
+the window: chamber heater assembly REMOVED (its fan burnt out - it was always a
+risk with that configuration, no forced cooling over the shaded-pole motor); Z
+BRAKES REWIRED through a relay to take the coil load off the board; the rear Z
+motor DROPPED ~100mm during the brake work and was wound back up by hand; front
+two corners of the FR4 BOLTED DOWN on the morning of 01/09.
+
+BRAKE FAULT: RECURRED 01/09/2026 PM - THE REWIRE DID NOT FIX IT. The relay did
+not energise, so OUT1 never drove; the coil load hypothesis is dead and it is
+the Duet output. See project.txt / project-long.txt. The clean run recorded
+below is left as written because it is still true and still useful - it shows
+this fault can hide for 38 cycles, so treat any "no recurrence" as weak
+evidence. Original note follows.
+BRAKE FAULT: NOT SEEN SINCE THE REWIRE. 38 homeall.g invocations, 23 G32 tram
+cycles and 15 completed meshes since 31/08 14:44, zero emergency stops and zero
+aborts. Prior to that it had fired three times in four days (27/08 x2, 30/08 x1,
+the last nine seconds into homeall.g at the M17 Z brake release). Timing was
+already ruled out by Trev (200/400/800/1800ms all faulted), so the load on the
+board was the remaining hypothesis and the relay appears to have settled it.
+NOT proof - it was always intermittent - but 38 clean cycles is well past what
+it previously tolerated.
+
+FINAL STATE, 01/09 08:29-08:45, front corners bolted, chamber 21.4-21.5C,
+three 7x7 runs via G29 with M18 between each:
+               r1        r2        r3      MEAN    range
+   mean    -0.0978   -0.1004   -0.0961   -0.0981   0.0042
+   dev     +0.0695   +0.0696   +0.0703   +0.0698   0.0008
+   bowY    +0.0078   +0.0078   +0.0078   +0.0078   0.0000
+   bowX    -0.0722   -0.0682   -0.0726   -0.0710   0.0044
+   twist   +0.0770   +0.0738   +0.0794   +0.0767   0.0056
+   rms     +0.0536   +0.0542   +0.0536   +0.0538   0.0006
+G32 residuals 0.00270, 0.00030, 0.00029 - back in the historical band after
+sitting at 0.007-0.012 immediately following the brake work.
+
+THE MOST REPEATABLE SET TAKEN. bowY identical to four decimals across all three
+runs, rms range 0.0006, dev range 0.0008. Deviation 0.0698 matches the pre-move
+datum's 0.0682 and rms 0.0538 is the LOWEST recorded (pre-move 0.0556). A 4x4
+set 18 minutes earlier gave twist +0.0758 against the 7x7's +0.0767 - nine
+microns apart on two independent grids, so there is no grid-density artefact in
+the twist figure.
+
+TWIST HISTORY, all same machine position:
+   pre-move 8-bolt datum 23.7C          +0.019
+   after physically moving it 22.3C     -0.046
+   after brake work + heater removal    +0.045 -> +0.062 -> +0.076
+   01/09 bolted, 21.5C                  +0.077 (4x4 +0.076)
+The step arrived across the brake work, NOT across the bolting. Bolting the
+front corners changed twist by +0.005 (inside noise) but tightened every spread
+and dropped rms - it removed freedom, just not the freedom setting twist.
+
+WHAT IS RULED OUT
+ - FRAME SETTLE / FOOTING. Trev put a block under one machine foot and ran
+   meshes for hours: NO CHANGE. The frame does not react to how it is stood, so
+   rack-from-temporary-footing is dead as an explanation.
+ - THE REAR MESH CORNERS. Re-running every 7x7 set with rear-left and rear-right
+   dropped from the fit made twist WORSE, not better (datum range 0.0032 ->
+   0.0101). Twist is a least-squares term over all 49 points; no two points
+   dominate it.
+ - GRID DENSITY. 4x4 and 7x7 agree on twist to 0.001.
+ - PROBE / MEASUREMENT. rms has held 0.054-0.059 through every configuration,
+   machine position and hardware change since the sheet was bolted.
+
+WHAT IS NOT RULED OUT: the bed carrier or Z arms (an arm that is TILTED, or a
+carrier twisted between the three arms, is non-planar and survives G32), and
+slab seating on its three supports. The timing favours the first - the rear
+motor dropping 100mm and being wound back by hand is the only disturbance in
+the window big enough to leave a set. Two tests that need no granite: lift the
+slab and set it down, three meshes (moves = seating); or indicator against the
+BED FRAME at the three arm positions while jogging Z (tells you if the carrier
+itself is twisted, independent of what sits on it).
+
+SUPPORT GEOMETRY - WORTH KNOWING BEFORE THE GRANITE IS DRILLED
+M671 puts the supports at (424.75,-8.75) front-right, (201,415) rear, and
+(-22.75,-8.75) front-left. The rear support is a SINGLE POINT AT CENTRE, so the
+support triangle narrows to a 32mm span by Y384 and the rear corners of the
+probe grid overhang it by 175mm. 24 of the 49 grid points sit OUTSIDE the
+triangle. This shows in per-point repeatability: rear-right repeats to ~19um
+against 3-8um along the front row, matching the support asymmetry exactly.
+Stiffness sum says it is NOT the granite bending - 20mm granite, 175mm overhang
+needs ~50N to deflect 30um, and no strain-gauge probe triggers near that.
+
+THERMAL MOVEMENT AT THE 8-HOLE PATTERN (440x440 slab, holes 7.5mm in from the
+edge, so 425mm corner-to-corner, 300.5mm radial from centre):
+   granite a    dT40 (60C)    dT55 (75C)      per axis at dT40
+     6e-6        0.206mm       0.283mm          0.145mm
+     8e-6        0.182mm       0.250mm          0.128mm
+    11e-6        0.145mm       0.200mm          0.103mm
+Movement is RADIAL - each corner moves diagonally outward, so a fastener there
+flexes in both axes at once. The 5mm holes on M3 hardware give 1mm of radial
+clearance, a 4x margin, so the geometry is covered by clearance alone and no
+flexure length is required. THE REMAINING VARIABLE IS FRICTION: a washer
+clamped hard on granite resists sliding, and the failure mode is STICK-SLIP -
+holds, load builds, releases suddenly, slab lands somewhere slightly different.
+Nip rather than torque, and something low-friction under the head.

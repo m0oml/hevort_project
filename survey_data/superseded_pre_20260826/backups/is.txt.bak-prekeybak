@@ -1,0 +1,241 @@
+================================================================================
+HevORT — Y-AXIS VIBRATION BASELINE (pre ALPS screw fix) + POST-FIX RESULT
+Session 19-20/08/2026 baseline. Post-fix comparison run 21/08/2026 — see
+RESULT below. Both predictions confirmed. Keep this file: the predictions were
+written BEFORE the measurement and both held, which is what makes the 204 Hz
+beam-torsion diagnosis trustworthy.
+================================================================================
+
+WHAT CHANGED SINCE BASELINE
+Loose screws found securing ALPS strain-gauge unit to Goliath water block.
+Hotend was perceptibly wobbly by hand. Screws now tightened.
+Question: which measured modes were caused by this, and which survive?
+
+TEST CONDITIONS — MUST MATCH EXACTLY OR COMPARISON IS INVALID
+  Accelerometer  LIS2DW, MB6HC toolboard, spi.cs3+spi.cs2
+  Position       NOZZLE (~70mm below X rail) — NOT extruder body
+  Orientation    M955 P0 C"spi.cs3+spi.cs2" I65
+  Shaper OFF     M593 P"none"
+  Acceleration   M201 X8000 Y8000        (0.82g — avoids ±2g clipping)
+  Speed          M203 X15000 Y15000      (250 mm/s cruise)
+  Toolhead X     X=200 (mid-span — 204Hz antinode, strongest signal)
+  Drive mode     D4 closed loop, all four. Verify M569 P70.0 .. P73.0
+                 individually before capturing.
+  Sweep          Y sweep 98 -> 293 at 250 mm/s
+  CAUTION        the file 1-Y98-293-0-none.csv on disk is NOT this baseline.
+                 Re-analysed 21/08/2026 it gives 197.4Hz (0.057) rms 0.234 — an
+                 exact match to the X=20 row of the X-position test below, not
+                 to the X=200 baseline. The three X=200 baseline captures were
+                 never saved; only the numbers below survive them.
+  Post-fix runs  post1/2/3-Y98-293-0-none.csv, via macros/is_recheck.g
+
+Z AXIS — DO NOT HOME WITH THE ACCELEROMETER FITTED
+  The LIS2DW sits AT THE NOZZLE, inside the ALPS load path. Z homing probes
+  THROUGH the nozzle, so G28 Z / G30 with the sensor on risks a crash and
+  corrupts the trigger height regardless. Do not home Z. Instead:
+
+    1. Establish REAL physical clearance first — jog the bed clear by eye.
+    2. G92 Z250      ; fake datum, marks Z homed so G1 X/Y are accepted
+    3. XY freely. NO Z MOVES AT ALL for the rest of the session.
+
+  G92 IS A LIE ABOUT POSITION and RRF will act on it in BOTH directions. With
+  M208 Z-10:300, a believed 250 leaves 50mm of accepted opening move and 260mm
+  of accepted closing move, neither related to where the bed actually is.
+  Verified 21/08/2026: homex.g/homey.g DO move Z (G1 H2 Z5 then Z-5) but the
+  pair is self-cancelling, so homing X and Y is safe given >5mm real clearance,
+  and the faked 250 survives homing intact.
+
+  AFTER the session: remove the accelerometer, THEN G28 (or at minimum G28 Z)
+  before anything probes, trams, meshes or prints. The Z datum is junk until
+  re-homed, and any heightmap applied against it is displaced bodily. M18 also
+  clears it — it drops the homed flags, which is a safe way to park.
+
+  Restore after: M201 X35000 Y35000 / M203 X30000 Y30000 / M593 P"zvd" F127 S0.05
+  NOTE S0.05 is the RRF 3.7.0-beta.3 DEFAULT, confirmed by the M593 report on
+  21/08/2026. config.g omits S and therefore runs 0.05. Do not "correct" it to
+  0.1 — the verified ring-down numbers below are 0.05 numbers.
+
+ANALYSIS METHOD
+  Sample rate 1607 Hz (read from CSV footer, do not assume)
+  Drop final row before parsing — it is "Rate NNNN, overflows N", not data
+  Columns: Sample,X,Y,Z  → Y column = machine Y at I65
+  Cruise window: samples 250:950
+  Detrend, Hanning window, rFFT, amplitude = |FFT|/n*4
+  Check clipping: count |a| >= 1.995 — ±2.000g is hard full scale at 14-bit
+  Baseline runs clipped 13-14 samples on Y; if clipping rises, amplitude
+  comparison is understated and invalid.
+
+BASELINE NUMBERS TO BEAT (nozzle, 250 mm/s, X=200, I1000, unshaped)
+  Y cruise rms         0.477 / 0.477 / 0.537 g   (3 runs)
+  204Hz band peak      218Hz(0.370) / 216Hz(0.369) / 211Hz(0.498)
+  312Hz                0.197
+  Y clipping           13-14 samples
+
+  Cross-axis during Y move @500mm/s (for reference):
+    215Hz  aX 0.294  aY 0.524  aZ 0.072
+    312Hz  aX 0.023  aY 0.310  aZ 0.086
+
+PREDICTIONS — STATED IN ADVANCE
+  312 Hz SHOULD LARGELY DISAPPEAR.
+    Evidence: collapsed 0.197 -> 0.032 (6x) when sensor moved from nozzle to
+    extruder body, i.e. above the probe mount. A 6x drop across that joint means
+    the compliance is below it — in the hotend/ALPS/water block stack.
+    Loose screws are exactly that. Expect large reduction.
+
+  204 Hz SHOULD SURVIVE.
+    Evidence 1: dropped only 1.8x across the same joint (0.370-0.498 -> 0.210),
+    matching pure lever-arm geometry. Sensor moved 70mm below rail to 40mm above;
+    predicted ratio 40/70 = 0.57, measured 0.42-0.61. Geometry, not a fix.
+    Evidence 2: X-position test, Y sweep at three toolhead positions —
+      X=20   197Hz (0.057)   rms 0.234
+      X=200  204Hz (0.222)   rms 0.312
+      X=380  216Hz (0.040)   rms 0.233
+    4-5x larger at mid-span, frequency held. Antinode centre, nodes at ends =
+    mode shape of the X beam (20x20x3mm 6063, pinned by Y carriages).
+    Diagnosis: first torsional mode, driven by toolhead CoM offset below the
+    tube shear centre. A loose hotend screw cannot produce a mid-span antinode.
+
+  IF 204 Hz ALSO DROPS SUBSTANTIALLY, the beam-torsion diagnosis is wrong.
+  Two prior hypotheses already failed this session (encoder calibration;
+  rail ball-pass). Do not assume — check.
+
+================================================================================
+RESULT — MEASURED 21/08/2026. BOTH PREDICTIONS CONFIRMED.
+================================================================================
+Conditions exactly as specified above. Cold (~23C), shaper off, D4 verified on
+all four drivers individually, 3 runs, via macros/is_recheck.g. Analysis per
+ANALYSIS METHOD; the script was validated FIRST by reproducing the X=20 row
+(197.4Hz / 0.057 / rms 0.234) to three significant figures.
+
+                     BASELINE (pre-fix)           POST-FIX                VERDICT
+  Y cruise rms       0.477 0.477 0.537 -> 0.497   0.497 0.523 0.464 -> 0.495   unchanged
+  ~204Hz amplitude   0.370 0.369 0.498 -> 0.412   0.418 0.402 0.228 -> 0.349   SURVIVES
+  ~204Hz frequency   218 216 211 Hz               213 216 211 Hz               held
+  ~312Hz             0.197 (single capture)       0.102 0.051 0.057 -> 0.070   ~3x DOWN
+  Y clipping         13-14 samples                9 / 4 / 4                    fell
+
+312 Hz — CONFIRMED LARGELY GONE. In runs 2 and 3 there is no distinct peak at
+all: the band maximum wandered to 294 and 303 Hz at ~0.05g, which is broadband
+floor, not a mode. Only run 1 retains a real line, 315Hz at 0.102. The loose
+ALPS screws WERE this mode, exactly as the 6x sensor-relocation collapse
+predicted.
+
+204 Hz — CONFIRMED SURVIVING. Means moved 0.412 -> 0.349, but the baseline
+spread alone was 0.369-0.498 and the post spread is 0.228-0.418. They overlap
+heavily; this is inside the ~15% scatter. THE BEAM-TORSION DIAGNOSIS STANDS. It
+remains a stiffness/geometry problem that shaping will not fix.
+
+VALIDITY: clipping FELL, so by the test above the comparison holds. Note the
+direction — clipping understates amplitude, so the baseline was understated
+slightly MORE than the post-fix runs. That makes the 312Hz reduction marginally
+larger than measured, not smaller, and means the 204Hz "no change" is if
+anything a touch optimistic.
+
+BOTTOM LINE: overall vibration is UNCHANGED, because 204 Hz dominates the energy
+and 204 Hz is untouched. The screw fix bought a clean probe load path, not a
+faster machine. The 600-700 mm/s ceiling is unmoved.
+
+INCIDENTAL: the 127Hz band sat at 126.3 / 126.2 / 126.2 Hz across all three
+runs. The top panel and the temporary slab have NOT moved the gantry mode, so
+M593 F127 is still correctly placed. Cold only — the hot check after the rail
+shim still stands.
+
+--------------------------------------------------------------------------------
+MODE SHAPE — THREE-POINT X TEST REPEATED 21/08/2026  (macros/is_xpos.g)
+--------------------------------------------------------------------------------
+Same conditions, 3 runs each, X=10 and X=390 (10mm inside each end of travel),
+combined with the X=200 set above. X homes to MIN = LEFT (homex.g, config.g:80).
+
+                       X=10 (left)   X=200 (mid)   X=390 (right)
+  Y cruise rms            0.366         0.495         0.228
+  ~204Hz amplitude        0.053         0.349         0.031
+  ~204Hz frequency      207-214 Hz    211-216 Hz    202-204 Hz
+
+  Band energy (mean of 3):
+    110-140 gantry        0.201         0.155         0.115
+    140-175               0.228         0.233         0.178
+    175-240 torsion       0.134         0.666         0.076
+    240-290               0.200         0.190         0.097
+    290-340               0.219         0.152         0.158
+    340-500               0.258         0.205         0.140
+
+The torsion band at mid-span is 5x the left end and 9x the right, and the peak
+frequency HELD at 202-216 Hz at every position. Frequency independent of
+position = structural mode, not forced. Antinode dead centre, nodes at both
+carriages. A far stronger confirmation of the first-torsional-mode diagnosis
+than the original 4-5x result.
+
+The ENDS ARE UNCHANGED from the pre-fix baseline — X=20 0.057 -> X=10 0.053,
+X=380 0.040 -> X=390 0.031. The screw fix did nothing at the nodes, which is
+correct: there is no torsional motion there to couple into.
+
+--------------------------------------------------------------------------------
+OPEN — LEFT/RIGHT ASYMMETRY. DO NOT SHIM ANYTHING OVER THIS YET.
+--------------------------------------------------------------------------------
+NEW as of 21/08/2026: overall rms is 0.366 at the left end vs 0.228 at the
+right, a factor of 1.6. The baseline X-position test was SYMMETRIC (0.234 vs
+0.233), so this appeared between the two sessions.
+
+It is NOT the torsion mode. It is Y-direction only — cross-axis rms during the
+same sweeps is essentially flat across the span:
+
+                    aX      aY      aZ
+    X=10 (held)    0.175   0.349   0.164
+    X=200          0.197   0.495   0.136
+    X=390          0.186   0.228   0.126
+
+The elevation sits in the 110-140Hz gantry band (0.201 vs 0.115, decreasing
+monotonically left to right — a DIFFERENT mode shape from the 204Hz torsion,
+which peaks at centre) plus broadband above 240Hz.
+
+RULED OUT: the temporary accelerometer lead. Re-run at X=10 with the lead held
+clear by hand (macros/is_x10_recheck.g) gave 0.355 0.341 0.351 -> 0.349 against
+0.366 dragging — only 12% of a 0.138 gap. A stationary control confirmed the
+reroute did not disturb the sensor mount (gravity vector identical to 0.4mg:
+Z +0.9814 -> +0.9818), though hand contact raised the stationary noise floor
+1.4mg -> 24mg, negligible against a 0.3g signal.
+
+PRIME SUSPECT: THE UMBILICAL, unsupported at the time of measurement
+(project.txt item 11 — anchor not built, Key-Bak Sidekick not yet arrived). The
+bundle carries the CPAP cable, BOTH water lines and the PTFE tube; it drapes to
+one side and its restoring force on the toolhead necessarily varies with X.
+That fits every feature: acts in Y, position-dependent and monotonic, broadband
+and low-frequency rather than a discrete mode, and it appeared only after the
+toolhead bundle was completed.
+
+Note the known geometry fault is on the RIGHT rail — the OPPOSITE end from the
+noisy one. No correlation, which is another reason not to treat this as a frame
+fault.
+
+RETEST WHEN THE KEY-BAK MOUNT IS BUILT: re-run macros/is_xpos.g unchanged and
+compare against 0.366 / 0.495 / 0.228. If left rms falls toward 0.23 it was the
+bundle and it is solved. If it stays near 0.35 it is structural and the left
+tower and belt path deserve a proper look. Make the bundle geometry REPEATABLE
+or run-to-run scatter will swamp the comparison.
+
+ALSO WORTH RE-CHECKING AFTER THE FIX — ALL CLOSED 21/08/2026
+  Wobble by hand — GONE.
+  G31 trigger height — RE-PROBED. Now P500 X0 Y0 Z-0.030 (slip gauge, +/-0.005).
+  The loose joint turned out NOT to be in the probe's VERTICAL load path: the
+  paper-feeler value was identical before and after tightening. It WAS in the
+  tilt path — loose screws doubled apparent rear-edge tilt, 0.203 -> 0.419mm.
+  See frame_survey_20260821.txt section 10.
+  bed.g tramming — P1/P2 probe points swapped to match M671, done 21/08.
+
+CONFIRMED SEPARATELY — NOT AFFECTED BY THIS FIX
+  127 Hz gantry bending mode. Measured 8 ways (ring-down across D2/D4,
+  I500/I1000, both axes) at 121-147 Hz. Resonance-lab plugin independently
+  gave X 128.6Hz / Y 120.8Hz. Shaper committed: M593 P"zvd" F127 S0.05
+  Verified: X ring-down rms 0.12 -> 0.08, 121Hz peak 0.14 -> 0.03,
+  accel clipping eliminated.
+
+METHOD WARNINGS LEARNED THE HARD WAY
+  - Single captures have ~15% run-to-run scatter. Three runs minimum before
+    trusting any modest effect. An apparent I1000->I500 improvement vanished
+    entirely once repeats were run.
+  - M569.1 with parameters DROPS DRIVERS TO OPEN LOOP. Re-home after, and
+    verify with M569 Pxx.0 (not M569.1, which reports PID but not mode).
+  - Resonance-lab plugin sweep is quantisation-limited above ~100Hz: at 80
+    steps/mm and its 60mm/s^2-per-Hz excitation, 135Hz = 2.2 microsteps of
+    commanded motion. Cannot usefully probe 204Hz. Use decel ring-down instead.
+================================================================================

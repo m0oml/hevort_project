@@ -1,0 +1,203 @@
+=======================================================================================
+HevORT — BRIEF FOR BUILDING A SLICER PROFILE
+Written 13/09/2026 from the live config.g, sys macros and project notes on the Pi.
+Updated 13/09/2026 with Trev's answers: 0.6mm solid tungsten carbide nozzle,
+1.75mm filament, sanded FR4 print surface, chamber heating IN the profile.
+config.g is authoritative. If this file and config.g disagree, config.g wins.
+Items marked ASK TREV are not recorded anywhere; do not guess them.
+=======================================================================================
+
+WHAT THE MACHINE IS
+  Custom CoreXY HevORT, AWD (4 closed-loop Duet M23CL motors on CAN), enclosed and
+  insulated chamber. Duet 3 6HC + Raspberry Pi 4 in SBC mode.
+  Firmware: RepRapFirmware 3.7.0-rc.1 / DSF 3.7.0-rc.1.
+  -> Slicer G-code flavour: "RepRapFirmware".
+  Single tool (T0), single extruder. No multi-material, no filament sensor.
+
+BUILD VOLUME / COORDINATES
+  Usable travel (M208): X 0..400, Y 0..400, Z 0..370. Z370 is provisional; Trev
+  keeps ~20mm of headroom below the real limit, so leave it at 370.
+  Origin is FRONT-LEFT: X homes to min (left), Y homes to min (front).
+  Bed shape: rectangle 0,0 -> 400,400. Bed centre is X200 Y200.
+  Physical bed: 440x440x20mm granite slab, 400x400mm 1400W silicone mat,
+  FR4 top sheet (5mm, bolted).
+  PRINT SURFACE: the FR4 itself, LIGHTLY SANDED. No PEI, no sheet on top. Set
+  the slicer's bed type/plate to a generic textured/rough surface; first-layer
+  settings are tuned per filament on this surface.
+  No custom bed model/texture needed.
+
+TOOLHEAD
+  Hotend  : Mellow Goliath, water-cooled (Chimera-type heatbreak). PT1000 sensor.
+            Firmware max temp 365C (M143 H1 S365). PID tuned 29/08/2026.
+  Nozzle  : West3D "Undertaker", 0.6mm, SOLID TUNGSTEN CARBIDE. Abrasive-safe
+            (CF/GF filaments fine). Base line widths/layer heights on 0.6mm.
+  Extruder: Mellow VZ-HextrudORT Low Plus, direct drive, NEMA14 (Moons 10T).
+            Filament diameter 1.75mm.
+            E steps CALIBRATED 15/09/2026: M92 E536, 100mm requested = 100mm fed.
+            Extruder current 600mA. Fed 50mm3/s at 220C without skipping; the
+            hotend's real melt limit is not yet measured, so do not set max
+            volumetric speed above ~40mm3/s until it is. The extruder has still
+            never printed: flow, then pressure advance, then retraction are next.
+  Probe   : Mellow ALPS strain gauge on the hotend — THE NOZZLE IS THE PROBE.
+            XY offset is 0,0 and that is correct. See START G-CODE for what
+            that implies (clean nozzle, probe cool, lift straight after).
+  Part cooling: CPAP blower, Fan 1, mapped to T0 (M563 P0 ... F1). Plain M106 S..
+            with no P goes to it. PWM, no tach. Fan scale 0-1 or 0-255 both fine.
+
+FIRMWARE MOTION LIMITS (config.g) — slicer must not exceed these
+  Max speed  (M203): X/Y 30000 mm/min = 500 mm/s, Z 1000 mm/min = 16.7 mm/s,
+                     E 3600 mm/min = 60 mm/s
+  Max accel  (M201): X/Y 35000 mm/s^2, Z 20 mm/s^2 (!), E 250 mm/s^2
+  Jerk       (M566): X/Y 900 mm/min = 15 mm/s, Z 12 mm/min = 0.2 mm/s,
+                     E 120 mm/min = 2 mm/s
+  Input shaping: ZVD at 147 Hz, set in config.g. Do NOT emit M593 from the slicer.
+  Recommended: set the slicer's machine limits to these values and turn OFF
+  "emit machine limits to G-code" (or make sure anything it emits matches). M204
+  per-feature acceleration is fine; RRF supports it.
+
+  REALISTIC CAPABILITY — for choosing print speeds, not the firmware ceiling:
+  - Closed loop validated at 500 mm/s / 35000 mm/s^2 with drift within +/-0.025mm.
+  - Two structural modes are still UNRESOLVED: ~215 Hz X-beam torsion (excited by Y
+    acceleration) and ~312 Hz hotend-mount wobble. Shaping cannot remove them. The
+    velocity ceiling is ~600-700 mm/s (audible resonance, loop saturates).
+  - Vibration sweeps show a sharp onset somewhere between 180 and 250 mm/s,
+    right-hand side of the bed.
+  - So build a CONSERVATIVE first profile (e.g. outer walls ~100-150 mm/s, inner/
+    infill ~200-250 mm/s, accel 5000-10000) and let Trev push it after test
+    prints. Volumetric flow of the Goliath has not been measured: default to a
+    cautious max volumetric speed and flag it for calibration.
+
+Z IS SLOW — design around it
+  Z accel is 20 mm/s^2 and Z max is 16.7 mm/s (three brake-stepper ball screws).
+  A 0.4mm Z-hop costs roughly a second in ramp time alone. Keep Z-hop OFF, or
+  small and only on travel over printed parts. Firmware retraction (G10/G11) is
+  set up with Z0 hop for exactly this reason.
+
+RETRACTION
+  Extrusion mode: RELATIVE (config.g sets M83). Tick "use relative E distances".
+  Firmware retraction is configured: M207 S0.3 R0 F3600 Z0 (0.3mm @ 60 mm/s,
+  starting value, uncalibrated). Either use firmware retraction (G10/G11) or slicer
+  retraction; slicer retraction is easier to tune per filament. Retract speed above
+  60 mm/s is clamped by M203 E. Direct drive: start ~0.3-0.8mm.
+  Pressure advance is NOT set in config.g. Put M572 D0 S<value> in the filament
+  start G-code once calibrated (start at 0).
+
+HEATED BED — READ BEFORE SETTING BED TEMPS
+  Heater H0 (SSR), mapped as bed. Controlled from the SLAB RTD S5, so the bed
+  temperature in the slicer is the granite temperature. The mat sensor S2 is a
+  limit only: SOFT 165C (heater clamps off above it) and HARD 180C (heater
+  fault). Slab fault limit 150C. The slab can never run hotter than the mat, so
+  keep bed temps to ~110C max in any profile.
+  First heat 15/09/2026: slab 25 -> 50C in about 12.5 min (mat capped at
+  90-110C), with a few degrees of overshoot past 50C.
+  The slab is ~10kg of granite: heat-up is SLOW (tens of minutes+). Use M190 (wait)
+  but expect it; a separate preheat macro may suit Trev better - ASK TREV.
+  The slab was WET and needed a 50-60C drying cycle before running hotter. Whether
+  that is complete, and what bed temps are allowed now: ASK TREV.
+
+CHAMBER HEATING — CONTROLLED BY MACRO, NOT BY M141
+  The chamber heater is run by an external Siemens PLC, not by RRF. There is NO
+  M141 chamber heater in config.g, so a slicer's automatic M141/M191 will error.
+  The profile MUST control the chamber, through this macro:
+
+    M98 P"0:/macros/chamber_heat.g" S<degC>
+
+  What it does (read from the macro, 13/09/2026):
+  - S is whole degrees C. S below 40 (including S0) = heater OFF, returns at once.
+  - Sets global.chamberSP (tenths of a degree); daemon.g writes it to the PLC on
+    its 5 s poll.
+  - BLOCKS until chamber air is within 2C of target, polling every 5 s.
+  - Aborts (heater off) if the PLC reports a heater fault.
+  - TIMES OUT after 3600 s and CONTINUES THE PRINT anyway, with a console warning.
+  - Can be aborted from DWC/PanelDue with macros/chamber_abort.g.
+  - The macro's own menu offers 60C and 75C. Trev prints with a 60C chamber
+    and a 105C bed. No chamber ceiling: hotter is better (Trev, 15/09/2026).
+    The bed alone heats the chamber a lot: with the chamber heater OFF and the
+    door shut, a 105C bed took the air past 53C and still climbing.
+  - The PLC safety relay (Duet OUT8) must be enabled, which config.g does at boot
+    when the stop button is healthy. Nothing for the slicer to do.
+
+  Slicer setup:
+  - Turn OFF the slicer's own chamber temperature control / auto M141/M191.
+  - Keep the per-filament CHAMBER TEMPERATURE field and pass its placeholder into
+    the start G-code, e.g. Orca: S[chamber_temperature] (or
+    [overall_chamber_temperature]); PrusaSlicer 2.8+: S{chamber_temperature[0]}.
+    Check the exact placeholder name against the installed slicer version.
+  - Set PLA/PETG-type filaments to 0 (off) and ABS/ASA/PC/nylon to their target.
+  - To switch the chamber off from G-code: set global.chamberSP = 0
+    (RRF meta command, valid in a G-code file).
+
+  Why the ORDER matters: the Z datum moves 10.7 um per degC of chamber AIR
+  temperature. So the chamber must be at temperature and STEADY before homing
+  (G28 probes Z), not after. It settles within a minute or two of reaching
+  setpoint; no long soak is needed. The door must be SHUT - the sensor reads air,
+  and an open door makes the reading lie about the structure.
+
+EXISTING MACROS THE PROFILE CAN CALL (all in 0:/sys/)
+  G28       -> homeall.g: homes X, Y, then probes Z at bed centre (X200 Y200) with
+               the nozzle. Leaves the nozzle AT the bed surface - see below.
+  G32       -> bed.g: iterative 3-point tramming with the 3 Z motors. Takes a while.
+  G29       -> mesh.g: runs G32 itself, then a 7x7 mesh, saves heightmap.csv,
+               re-datums at centre. Several minutes. Not for every print.
+  G29 S1    -> load the saved heightmap.
+               CAUTION: the current heightmap.csv is dated 03/09/2026, BEFORE the
+               final slab was fitted (09/09). Do not load it until Trev has
+               re-meshed. ASK TREV.
+  printstart.g / printend.g: PLACEHOLDERS (they print "configure before use").
+               Do not call them from the slicer; put the logic in the slicer's own
+               start/end G-code instead.
+  T0 selection runs tpost0.g, which does M116 P0 (wait for tool temps).
+  stop.g (M0) exists and is harmless; it deliberately does not touch the PLC.
+  pause.g retracts 10mm, lifts Z5, parks at X0 Y0. resume.g re-primes 10mm.
+  No filament-change.g exists (M600 falls through to pause.g).
+  0:/macros/chamber_heat.g S<degC> : chamber on + wait (see CHAMBER HEATING).
+  0:/macros/chamber_abort.g        : stops a chamber wait and sets the chamber off.
+
+START G-CODE — REQUIREMENTS (write it to satisfy these)
+  1. Stop the slicer from auto-inserting its own M104/M190 ahead of the start block
+     (reference its temperature placeholders inside the block) so ordering is
+     controlled here.
+  2. Select the tool first: T0.
+  3. Bed: M140 to print temp (no wait yet) - the bed helps heat the chamber.
+  4. Chamber: M98 P"0:/macros/chamber_heat.g" S<chamber placeholder>. It blocks
+     until the chamber is there (returns at once if the filament's chamber temp
+     is below 40). Heat the chamber BEFORE homing, never after.
+  5. M190 to bed print temp.
+  6. Hotend to ~150C for probing (M109 S150) — hot enough to soften residue, cool
+     enough not to ooze onto the bed. The nozzle IS the probe, so it must be clean.
+  7. G28.
+  8. IMMEDIATELY lift after G28, on the next line: G1 Z5 F600. Never leave a hot
+     nozzle sitting at trigger height over one spot - it locally heats the bed.
+  9. (Optional, once Trev has a valid map) G29 S1 to load the mesh.
+ 10. Heat to print temp (M109 S[first layer temp]), purge line near the front edge
+     inside 0..400 (e.g. along Y~5-10), then print.
+  Do not put M18/M84 in the start block.
+
+END G-CODE — REQUIREMENTS
+  Retract a little, M104 S0, M140 S0, M106 S0, chamber off with
+  set global.chamberSP = 0 (stop.g deliberately leaves the chamber running, so
+  the end G-code has to do it), lift Z (G91 / G1 Z10 F600 / G90,
+  staying under Z370), park at X0 Y0 or front-centre (inside 0..400 — an earlier
+  placeholder parked at Y415 and would have thrown the print), then M84.
+  M84 also engages the Z motor brakes (power-to-release), which is fine and wanted.
+
+OTHER SETTINGS
+  - Label objects: "Firmware-specific" / M486 (RRF supports cancel-object).
+  - Arc fitting (G2/G3): supported by RRF, optional.
+  - Thumbnails: DWC displays embedded thumbnails (PNG or QOI).
+  - Physical printer / upload: host type "Duet" (DWC via DSF on the Pi,
+    hostname "hevort"). Address and whether a DWC password is set: ASK TREV.
+  - Do NOT emit: M141, M191 (use chamber_heat.g instead), M593, M500/M501/M502, M92, M906, M558, G31, M307.
+    config.g is hand-edited and those are machine settings, not per-print ones.
+
+QUESTIONS TO PUT TO TREV BEFORE FINISHING THE PROFILE
+  - Maximum chamber temperature: ANSWERED 15/09 - no ceiling, hotter is
+    better. Prints at 60C chamber.
+  - Should the chamber switch off at the end of a print, or keep going for a
+    post-print soak?
+  - Max bed temp: ANSWERED 15/09 - prints at 105C, keep profiles to ~110C.
+    (Whether the slab drying cycle is complete was not separately confirmed.)
+  - Has the bed been re-meshed on the final slab (so G29 S1 is safe)?
+  - Which filaments first (PLA / PETG / ABS / ASA / nylon ...)?
+  - Printer's network address for upload, and DWC password?
+=======================================================================================

@@ -1,0 +1,155 @@
+BEDMAT SENSOR OFFSET CHARACTERISATION — 09/09/2026
+=======================================================================
+
+QUESTION
+  Does the bed mat sensor (S2) read high, and if so is the error a fixed
+  offset or a slope/beta error?
+
+  S2 = 100k NTC, generic B3950 curve, on temp2. CONTROL SENSOR for heater 0
+       and carries the only M143 limit (110C).
+  S5 = bed slab Pt100, 4-wire, MAX31865 on spi.cs1. Monitor only.
+
+  Trev's position, and the reason for the test: a 4-wire Pt100 on a proper
+  amplifier is trusted over a generic Chinese NTC.
+
+  SENSOR GRADES - corrected 10/09/2026. Do NOT treat these as equal:
+    S5 slab    4-wire Pt100 on MAX31865   reference grade
+    S4 ElecBay WIKA 4-wire Pt100 on MAX31865   reference grade
+    chamberPV  weighted average of a WIKA 4-wire Pt100 and two 3-wire
+               Pt100, via the S7-1200 / SM1231 and Modbus. Good grade and
+               low noise, being an average of three. Reads AIR, not metal.
+    S0 hotend  INEXPENSIVE 2-WIRE Pt1000  NOT a reference. Lead resistance
+               and loose tolerance. Used here only as an ambient proxy for
+               the stop condition and the dT column - it carries no weight
+               as corroboration.
+    S2 mat     generic 100k NTC, B3950 only, C=0
+
+METHOD
+  The mat is bonded to the granite with Dowsil 736, so with the heater off
+  the two are in intimate thermal contact. Any genuine gradient decays as
+  the assembly approaches ambient; the surviving difference is sensor error.
+  Log mat, slab and the difference every 30s from hot to ambient and beyond.
+
+  M308 correction available (RRF 3.5+):
+      adjustedReading = (rawReading * (1.0 + V)) + U
+    delta constant across the range  -> fixed offset, correct with U
+    delta varies with temperature    -> beta/slope error, needs V
+  Both U and V are currently 0 on S2 (config.g line 84).
+
+PRIOR DATA POINTS (uncorrected)
+  09/09 09:44, fully cold after 12h idle, heater never on:
+      mat 24.01   slab 21.08   delta +2.93   hotend 21.55
+      -> mat is the outlier, but note S0 is NOT reference grade (see above),
+         so this pairing is weak evidence. The equilibrium argument below
+         is what actually carries the result.
+  09/09 22:37, cooling from the 90C soak:
+      mat 47.68   slab 44.77   delta +2.91   hotend 24.64
+      -> same delta 24C higher, first hint of a constant offset.
+
+CONFOUND — AMBIENT IS NOT STABLE
+  Garage heating was on during the day and the shutter was open earlier.
+  A step in ambient warms the exposed mat within seconds while the granite
+  takes an hour, producing a REAL mat-vs-slab difference that is not sensor
+  error. Three references are logged alongside every sample (hotend S0,
+  ElecBay S4, chamber air via the PLC) — discard any window where they are
+  not flat. Trust only long settled stretches.
+
+PRECEDING HISTORY (same day, all logged in bed_soak_20260909.csv)
+  M303 autotune 45C @25% PWM -> M307 H0 R0.891 K0.343:0.000 D6.63 E1.35
+       S0.25 B0  (RAM only, never written to config.g)
+  Staged soak 45/50/55/60C, then slab cascade to 60C (mat 81C),
+  then mat 80C 1h, ramp to 90C at 1C/min, mat 90C 1h, shutdown 21:42:22.
+  Slab peak 67.68C. No heater fault at any point.
+
+FILES
+  bedmat_offset_cooldown_20260909.csv         this run, 30s resolution
+  bedmat_offset_cooldown_20260909_prerun.csv  10 earlier samples, 22:37-22:42
+  bed_soak_20260909.csv                       the full day's heating run
+  bed_run_scripts_20260909/                   the controllers that drove it
+
+CAUTION IF THE CORRECTION IS APPLIED
+  S2 is the control sensor AND carries the only M143 limit. A -3C offset
+  means every future bed setpoint runs 3C hotter in reality than it did
+  today. Everything measured on 09/09, including the M307 model, was taken
+  UNCORRECTED.
+  Also note config.g line 84 comments the sensor as "10K" while the command
+  says T100000 — it is a 100k thermistor, stale comment.
+
+=======================================================================
+INDEPENDENT IR MEASUREMENT — 09/09/2026 ~22:45, Testo 805i
+=======================================================================
+  Mat surface by IR : 45.4 C
+  S2 (mat) logged   : 45.16 C   <- agrees within 0.24 C
+  S5 (slab RTD)     : 42.41 C
+  hotend Pt1000     : 24.54 C   ambient reference
+
+THIS CUTS AGAINST THE OFFSET HYPOTHESIS. An independent instrument agrees
+with S2, not with the slab RTD. If S2 is right at 45C then the ~2.8C delta
+is a REAL gradient, not sensor error, and no U correction is warranted.
+
+The mat is RED silicone. Colour in the visible has little bearing on
+long-wave IR emissivity for polymers - silicone rubber sits at ~0.95
+regardless, close to the 805i's fixed value, so this reading should be sound.
+
+UNRESOLVED CONFLICT
+  09/09 09:44, cold, 12h idle: mat 24.01 vs slab 21.08, same ~2.9 delta —
+  at equilibrium a real gradient should not exist. But the garage heating
+  was on and the shutter had been open, and the granite lags room air by
+  hours while the thin mat tracks it. So that morning reading may not have
+  been at equilibrium either, which would reconcile the two.
+
+  Note also the morning clusters do NOT split by sensor type:
+     mat NTC 24.01 + ElecBay Pt100 24.33  |  hotend Pt1000 21.55 + slab Pt100 21.08
+  Mixed types in both groups argues spatial/real over calibration.
+
+DECISIVE MEASUREMENT STILL NEEDED
+  IR the EXPOSED GRANITE, ideally close to the RTD pocket, at the same
+  moment as a logged sample.
+    reads ~42.4 -> RTD is right, delta is a real gradient, no correction
+    reads ~45   -> RTD reads low, and the correction belongs on S5 not S2
+  Caveat: polished granite is a poorer IR target than the silicone
+  (lower and more variable emissivity, more reflective), so treat that
+  reading as weaker evidence than the mat one.
+
+  Also worth knowing: the RTD sits in a pocket in the SIDE of the slab, so
+  it senses the edge. During cooldown the edge loses heat on more faces
+  than the centre, so slab-edge < slab-centre is physically expected — a
+  further reason the delta may be real rather than instrumental.
+
+
+=======================================================================
+RESULT — 10/09/2026 08:07
+=======================================================================
+  Settled window, last 2h of the cooldown, n=230:
+      delta mean 2.910 C, sd 0.031, range 2.82-3.00
+      mat drift -0.23C, slab drift -0.28C over the window (static)
+  Independent agreement: 2.93 measured 09/09 09:44 after a completely
+  different thermal history, 20h earlier.
+
+  ARGUMENT: at equilibrium with no power input, two bodies bonded with
+  Dowsil 736 cannot sustain a 2.9C difference - there is no heat source.
+  Therefore the residual is instrumental: S2 reads ~2.91C high vs S5.
+
+  APPLIED: config.g line 84, U-2.91. Also applied live via M308.
+  Verified immediately after: mat 22.07 vs slab 22.06, delta 0.01C.
+  Cross-check 10/09 08:15, post-correction, three independent readings:
+      mat S2 corrected 22.07 | slab S5 22.06 | chamber air 21.4
+  Chamber air sits 0.66C below the two solids, consistent with a trace of
+  heat still in the granite. This is the corroboration - NOT the hotend.
+  NOTE RRF stores/reports offsetAdj as -2.9 (rounds the third digit).
+
+  WHAT THIS DOES NOT ESTABLISH:
+   - Validity above room temperature. Every setpoint now runs 2.91C hotter
+     in reality than the same number did on 09/09, including anything
+     compared against that day's M307 model, which was tuned UNCORRECTED.
+   - The shape of the error across the range. The cooldown delta is sensor
+     error PLUS a real gradient which cannot be separated without
+     equilibrium points at temperature. The U-shaped curve seen during
+     cooldown (min 2.39 at 37C) is real in the data but must NOT be
+     attributed to the sensor.
+   - The Testo 805i IR reading (45.4C on the mat at 45C) is NOT decisive:
+     that instrument class is typically +-2C, comparable to the effect.
+
+  TO GO FURTHER: hold the bed at a setpoint until FULLY soaked (hours),
+  compare at equilibrium, repeat at two or three temperatures. Only
+  gradient-free points can characterise the curve.

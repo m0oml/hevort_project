@@ -1,0 +1,487 @@
+=======================================================================================================
+FRAME GEOMETRY SURVEY + PROBE CALIBRATION  -  21/08/2026
+=======================================================================================================
+Session record. Covers Z probe trigger height, the P5/P9 resolution, a bed.g
+motor-order bug, and a full gantry geometry survey cross-checked against a
+Mitutoyo DTI. Ends with a shim schedule and an order list.
+
+Machine state during all of this: damaged/temporary granite slab fitted, no bed
+heater attached, hotend PT1000 still failed (so everything COLD). Replacement
+slab on order.
+
+-------------------------------------------------------------------------------
+1. HEADLINE FINDINGS
+-------------------------------------------------------------------------------
+*** GEOMETRY IS TEMPERATURE DEPENDENT. Cold numbers are NOT what to build to. ***
+Measured cold (~20C frame) and hot (60C chamber / 46C frame, soaked).
+
+a) RIGHT Y RAIL LOW AT REAR - the shimmable fault.
+      cold 0.203mm   hot 0.314mm   across the 380mm probe span
+   Front rails level in both states (-0.024 cold, -0.019 hot).
+   The drop grows progressively rear-ward and grows further with temperature.
+   SHIM TO THE HOT FIGURE - section 6.
+
+b) X BEAM CURVATURE INVERTS WITH TEMPERATURE - NOT shimmable.
+      cold  +0.042 -0.010 -0.049 +0.018   (dips mid-span)
+      hot   -0.079 +0.108 +0.068 -0.097   (crowns mid-span)
+   ~0.2mm swing. Consistent with a vertical thermal gradient across the
+   20x20x3 section - hot air above, cold granite below - bending the beam.
+   It does not exist cold and cannot be corrected mechanically. Mesh only.
+   NOTE this supersedes the earlier "X beam is good, leave it alone" - that
+   conclusion was cold-only and is not wrong, just incomplete.
+
+c) Z DATUM SHIFTS 0.877mm between cold and soaked. Whole-loop expansion.
+   Harmless IF you re-home and re-tram hot. Fatal if you home cold and print hot.
+
+d) THE ALPS CANNOT COMPLETE A LARGE MESH HOT. It latches "probe already
+   triggered" after ~21-25 points (~150-200 strikes) and recovers between runs.
+   KNOWN behaviour of this probe on this machine, seen before. Raising the
+   deployprobe settle to 800ms and adding M558 R0.4 did NOT help - both reverted.
+   USE A COARSE GRID HOT: 4x4 completes reliably, 5x5 is untested and marginal.
+
+e) Both rails bow upward mid-span ~0.2mm, COMMON MODE, no roll induced. Ignore.
+
+f) THE MACHINE IS REPEATABLE. cold run2 vs run3 0.0043mm rms; hot 4x4 A vs B
+   0.0064mm rms. The frame is stable at a given temperature.
+
+g) G31 trigger height -0.030 +/-0.005 (slip gauge, tight assembly). Still COLD.
+h) M92 Z800 CORRECT, verified by calipers against physical bed travel.
+
+-------------------------------------------------------------------------------
+2. FILES CHANGED TODAY   (all backups in sys/)
+-------------------------------------------------------------------------------
+config.g       G31 P500 X0 Y0 Z-0.025   (was Z0.7)     bak: config.g.bak-trigheight
+bed.g          P1/P2 probe points swapped to match M671 bak: bed.g.bak-preswap
+project.txt    Z motor order corrected                  bak: project.txt.bak-zorder
+mesh.g         NEW - G32-then-G29 mesh macro            (no prior version)
+
+-------------------------------------------------------------------------------
+3. Z PROBE
+-------------------------------------------------------------------------------
+TRIGGER HEIGHT = -0.030mm  +/-0.005   (SLIP GAUGE, tight assembly, 21/08/2026)
+Measured at bed centre with G31 Z0 and a fresh G30 datum, nozzle parked at Z1.100:
+    1.06mm gauge  slips under with ZERO resistance   -> gap > 1.060
+    1.07mm gauge  goes with a PUSH                   -> gap ~ 1.070
+    contact = 1.100 - 1.070 = 0.030  ->  trigger height -0.030
+
+HISTORY OF THIS VALUE
+  +0.700  original placeholder - wrong in sign AND magnitude
+  -0.025  paper feeler (0.10mm, micrometer), hotend screws LOOSE, +/-0.025
+  -0.025  paper feeler repeated after tightening - IDENTICAL, so the loose joint
+          was not in the probe's vertical load path
+  -0.030  slip gauge, +/-0.005  <- CURRENT, in config.g
+
+The paper method was sound: it landed within 5 microns of the slip gauge. The
+gain from slip gauges was PRECISION (+/-0.025 -> +/-0.005), from bracketing with
+two blocks 0.01 apart rather than a 0.05-wide guess. Paper compression, which was
+the suspected error source, turned out to be negligible.
+
+NEGATIVE is correct - the ALPS is a strain gauge, so the nozzle presses in before
+the threshold is crossed. It is a CONSTANT offset: it moves the datum, never the
+SHAPE of a heightmap. No mesh is invalidated by a change here.
+
+*** STILL REDO AT PRINTING TEMPERATURE once the PT1000 is replaced. Nozzle
+    thermal expansion shifts this 0.05-0.10mm - ten to twenty times the current
+    uncertainty. Cold value is fine for geometry, must not reach printing. ***
+
+Note the DTI cannot be used to check this. It is a dial TEST indicator (lever
+type), so absolute readings carry cosine error that depends on stylus arm angle.
+Good for nulling and for shape; not a length standard.
+
+P5 vs P9  ->  RESOLVED: P9, and it is load-bearing.
+RRF only auto-runs deployprobe.g / retractprobe.g for deployable probe types
+(type 9). Those macros are what assert the ALPS enable pin (M42 P1 S1/S0).
+Switch to P5 and the enable never asserts and the probe goes dead.
+DO NOT "tidy" this to P5.
+
+Probe output is BINARY (0 / 1000), confirmed by a 21-step scan at 0.01mm
+intervals - it sits at 0 then snaps to 1000. So the P500 threshold is not
+discriminating anything; any value 1..999 behaves identically.
+
+-------------------------------------------------------------------------------
+4. bed.g MOTOR ORDER BUG  (found and fixed)
+-------------------------------------------------------------------------------
+RRF pairs G30 P<n> to the n-th M671 coordinate. bed.g had P1 and P2 swapped
+relative to M671, so G32 was applying the front-left correction to the rear
+motor and vice versa.
+
+Invisible on a near-level bed - all three corrections come out near-equal and
+swapping two equal numbers changes nothing. It would only bite once the bed was
+genuinely out of tram, as failure to converge.
+
+Corner-to-driver mapping CONFIRMED PHYSICALLY by M584 single-driver jog:
+  driver 0.0 = front-right   M671 entry 0 (424.75, -8.75)
+  driver 0.1 = rear          M671 entry 1 (201, 415)
+  driver 0.2 = front-left    M671 entry 2 (-22.75, -8.75)
+config.g's comment was correct. project.txt was wrong and has been fixed.
+
+-------------------------------------------------------------------------------
+5. FRAME GEOMETRY SURVEY
+-------------------------------------------------------------------------------
+METHOD
+Bed is granite = rigid flat reference. Self-weight sag of a 20mm granite strip
+over a 400mm span computes to 0.0053mm - fifty times too small to matter, so the
+slab cannot be the source of anything measured here. A rigid plate on a 3-point
+mount defines a plane exactly, so after G32 the entire heightmap residual is
+MACHINE geometry, not bed.
+
+HEIGHTMAP - RUN 3, THE VALID ONE (7x7, X10:390 Y16:380)
+min 0.000  max 0.459  mean 0.137  deviation 0.104
+Row 0 = Y16 (FRONT), row 6 = Y380 (REAR). RRF writes rows from Ymin upward.
+
+   0.273  0.237  0.221  0.197  0.182  0.181  0.249     <- Y16   front
+   0.151  0.108  0.082  0.078  0.071  0.071  0.153
+   0.082  0.042  0.023  0.011  0.001  0.024  0.113
+   0.069  0.028  0.008  0.000  0.009  0.029  0.129
+   0.088  0.057  0.041  0.037  0.063  0.086  0.187
+   0.156  0.121  0.117  0.131  0.149  0.189  0.306
+   0.256  0.244  0.259  0.276  0.304  0.346  0.459     <- Y380  rear
+  X10                                            X390
+
+Positive = bed reads HIGH = toolhead sits LOW there (bed is flat granite, so it
+is the gantry that moves). Sign confirmed by dropping the bed 0.400mm and
+watching the DTI fall.
+
+EDGE SPREADS (left to right, mean removed)   run1     run2     run3
+  front edge                                -0.022   -0.018   -0.024
+  rear  edge                                +0.419   +0.210   +0.203
+  -> front reproduces everywhere. Rear was DOUBLED by the loose toolhead.
+
+RAIL HEIGHTS (sign flipped, +ve = rail higher; columns X10 / X390)
+     Y     left    right      R-L
+    16   -0.273   -0.249   +0.024
+    77   -0.151   -0.153   -0.002
+   137   -0.082   -0.113   -0.031
+   198   -0.069   -0.129   -0.060
+   259   -0.088   -0.187   -0.099
+   319   -0.156   -0.306   -0.150
+   380   -0.256   -0.459   -0.203
+
+Right rail drop ACCELERATES rearward - a uniform twist would be linear. This is
+a droop or mislocated support at the rear, not the assembly being cocked.
+
+Rail crown vs own chord: left +0.196, right +0.225 (common mode - ignore)
+X beam bow after removing rail tilt: +0.100mm / 380mm = 0.26 mm/m (good)
+
+DTI CROSS-CHECK - NOW OF LIMITED VALUE
+A Mitutoyo lever DTI clamped to an M6 bolt in the hotend was swept over the bed
+and agreed with run 1 to rms 0.019mm. That agreement is much weaker evidence than
+it first appeared: the indicator was mounted on THE SAME LOOSE HOTEND, so both
+instruments shared the defect. Treat the DTI sweep as corroborating run 1, which
+is itself discarded. The DTI also reads ~11% high (see section 7).
+What the DTI did establish soundly: the sign convention, and that the granite is
+a valid flat reference.
+
+NOT A LOOSE JOINT
+Rear joint is an angle bracket with a large gusset and 4x M6, plus tower
+fasteners outboard. 0.42mm is far too large for elastic deflection of that.
+Measurements agree: zero hysteresis on reversal, and the reading returned to
+-0.225 at Y15 after a full traverse. A joint working loose would not repeat to
+5 microns. Conclusion: built-in assembly geometry.
+0.42mm over 400mm is 1 part in 1000 - below what a square and rule will hold on
+a frame this size.
+
+-------------------------------------------------------------------------------
+6. SHIM SCHEDULE   -  RIGHT Y RAIL ONLY   (from HOT geometry)
+-------------------------------------------------------------------------------
+Basis: MGN12, 500mm rail, 25mm pitch, 12.5mm end distance, 20 holes. Fastened at
+the two centre holes then every other hole outward = 10 fixings. Rail centre
+assumed on the Y travel centre (machine_Y = rail_pos - 55). Scale 550/380 =
+1.447 (rail centres vs probe span). Zeroed on fastener 1 - the front is level.
+
+BUILD TO THESE. The machine only ever prints hot.
+
+ #   rail mm   machine Y   exact    USE     build from          (cold, do not use)
+ 1      37.5      -17.5    0.000    0.00    (none - datum)        0.00
+ 2      87.5       32.5    0.049    0.05    0.05                  0.00
+ 3     137.5       82.5    0.103    0.10    0.1                   0.05
+ 4     187.5      132.5    0.162    0.15    0.1 + 0.05            0.10
+ 5     237.5      182.5    0.225    0.20    0.2                   0.10
+ 6     262.5      207.5    0.258    0.25    0.2 + 0.05            0.15
+ 7     312.5      257.5    0.328    0.35    0.2 + 0.1 + 0.05      0.20
+ 8     362.5      307.5    0.403    0.40    0.4                   0.25
+ 9     412.5      357.5    0.482    0.50    0.4 + 0.1             0.30
+10     462.5      407.5    0.566    0.55    0.4 + 0.1 + 0.05      0.40
+
+stock: 0.05mm x5, 0.1mm x5, 0.2mm x3, 0.4mm x3   (order 2x, they get remade)
+
+Underlying fit, hot, unscaled (before x1.447), from 4 Y samples:
+  shim(Y) = -0.01269 + 0.000670*Y + 6.436e-07*Y^2     residual 0.0040mm
+Cold equivalent, for reference only:
+  shim(Y) = -0.00239 + 0.000276*Y + 8.574e-07*Y^2
+
+RULES
+- Shims must span the FULL rail width (12mm). Washer-sized shims let the rail
+  bridge and deform locally - defeats the point and wears the bearings.
+- Grade it, never step it. Every fixing gets its own thickness.
+- Fastener 1 gets nothing. All correction added going rearward.
+- Do NOT shim the left rail. Do NOT try to shim the X beam - its error is
+  thermal bending, it is not there when the machine is cold.
+
+CAVEATS
+- Fasteners 1 and 10 (Y-17.5, Y+407.5) are EXTRAPOLATED beyond the Y16-380 the
+  mesh covers. #10 is the largest in the stack.
+- Hot profile comes from 4 Y samples (4x4 grid), not 7. The probe cannot do more
+  hot. Fit residual is 4 microns so the quadratic is well determined, but it
+  cannot see structure between those samples.
+- Rail placement assumed, not measured. Low sensitivity (+/-20mm ~ 0.025mm).
+- Rail spacing 550mm IS measured. Do not change without recomputing.
+- After shimming, EVERYTHING here must be re-measured hot. The shim changes the
+  geometry these numbers describe.
+
+-------------------------------------------------------------------------------
+7. Z SCALE DISCREPANCY  ***RESOLVED 21/08/2026 - Z IS CORRECT***
+-------------------------------------------------------------------------------
+Commanding a 0.400mm Z move produced 0.4425mm of DTI deflection (+10.6%). Two
+candidates were open: wrong Z steps/mm, or the DTI over-reading.
+
+RESOLVED BY DIRECT MEASUREMENT after a power cycle:
+  commanded Z50 -> Z20   = 30.000mm
+  caliper, fixed frame reference to bed surface:
+      at Z50   81.97 mm
+      at Z20   51.96 mm
+      measured travel 30.01 mm   -> error 0.03%, i.e. caliper resolution
+
+*** M92 Z800 IS CORRECT. The bed arm linkage theory is dead. ***
+*** The heightmap is in REAL MILLIMETRES. The shim table in section 6 stands
+    exactly as written - NO 10% rescale. ***
+
+The 10.6% therefore belongs to the Mitutoyo, almost certainly a stylus that is
+not the length the indicator is calibrated for (lever DTIs scale directly with
+stylus length; a short stylus over-reads). Dividing every DTI reading by 1.1062
+improves agreement with the mesh from rms 0.0231 to 0.0187mm - a 19% improvement,
+supportive but not decisive on its own. The caliper check is the real evidence.
+
+PRACTICAL CONSEQUENCE: that indicator reads ~11% high until the stylus is
+identified. Fine for finding shape and nulling to zero; do not trust it for
+absolute magnitudes. Check the stylus length against the indicator's rated length
+before using it as a measuring instrument again.
+
+One point remains a genuine outlier: front-right (X385 Y15) sits -0.043 from the
+mesh as read, and -0.060 corrected - it gets WORSE with the correction, unlike
+everything else. Front-left was never captured. Worth re-measuring both corners
+before relying on the front edge being level to 0.022mm.
+
+-------------------------------------------------------------------------------
+8. ORDER LIST
+-------------------------------------------------------------------------------
+NEW, arising from this session:
+
+ SHIM STOCK - brass or stainless, right Y rail, HOT schedule (section 6)
+   Minimum:  0.05mm x5,  0.1mm x5,  0.2mm x3,  0.4mm x3
+   Order at least 2x - they get cut, dropped and remade.
+   Sheet stock beats pre-cut washers: must span the full 12mm rail width with an
+   M3 clearance hole or slot. A 0.05/0.1/0.2/0.4 assortment covers it.
+   (The earlier COLD schedule needed less - 0.05x3, 0.1x4, 0.2x3, 0.4x1. Ignore
+   it. Hot is ~40% thicker throughout and hot is what the machine prints at.)
+
+ALREADY OUTSTANDING (see project.txt PROCUREMENT):
+   Granite slab replacement, hotend PT1000, F1 3.15A 5V MDR fuse,
+   Key-Bak reel, cable glands, 20mm momentary push button.
+
+NOT NEEDED after all: feeler gauges. Slip gauges did the job better - see
+section 3. Paper landed within 5 microns of them anyway.
+
+-------------------------------------------------------------------------------
+9. NEXT STEPS, IN ORDER
+-------------------------------------------------------------------------------
+ 1. RE-VERIFY THE HOT GEOMETRY on a fresh soak before cutting shims. The hot
+    numbers come from one heating cycle. Cold took three runs to get right.
+    Procedure: chamber to 60, wait for frame drift <0.12C/min (~35 min), G28,
+    G32, then a 4x4 G29. Compare rear spread against +0.314.
+ 2. Shim the right rail per section 6. Requires removing rear insulation.
+ 3. Re-check the FRONT corners after - freeing a structural joint on a frame
+    this size can redistribute more than intended.
+ 4. Re-run the whole hot survey. The shim changes the geometry these numbers
+    describe, so everything above is superseded once metal goes in.
+ 5. printstart.g MUST be reworked before any real print. It currently homes and
+    loads a mesh with no reference to chamber state. With a 0.877mm cold-to-hot
+    datum shift, homing cold and printing hot puts the first layer badly out.
+    It needs: preheat chamber -> soak -> G28 -> G32 -> coarse G29 -> print.
+    NOT YET WRITTEN - deliberately left, 21/08/2026.
+ 6. Characterise a 5x5 hot mesh. 25 points sits right on the ALPS ceiling. If it
+    completes reliably it is the better print-start grid than 4x4, which loses
+    up to 65 microns of mid-span detail against a full 7x7.
+ 7. The ALPS point ceiling deserves its own session with the vendor's specs.
+    ~25 points hot is a low limit for a heated-chamber machine.
+ 8. After the PT1000 arrives: hot trigger height recalibration, then re-mesh.
+
+-------------------------------------------------------------------------------
+9b. THERMAL BEHAVIOUR - MEASURED 21/08/2026
+-------------------------------------------------------------------------------
+Chamber 22.4 -> 59.6C in ~23 min including a door opening (top panel now fitted,
+which project.txt still lists as outstanding).
+
+FRAME LAGS AIR BADLY AND NEVER EQUALISES
+  chamber air 60C  ->  frame settles ~46C.  A 14C gap held at equilibrium.
+  The frame thermally bridges to outside the chamber and the machine exterior is
+  5mm alloy sheet, so it sheds heat continuously. It approaches, never flattens.
+  Soak criterion must be a RATE, not a plateau: wait for frame drift <0.12C/min.
+  It took ~35 min from cold to meet that.
+  Frame temperature is therefore a function of AMBIENT as well as setpoint -
+  a cold workshop and a warm one give different geometry at the same setpoint.
+
+FRAME TEMPERATURE IS MEASURABLE: the failed hotend PT1000 is a bare RTD now
+foil-taped to a FRONT extrusion, reading on temp0. It is a proxy - it sits at
+the good end of the frame, and the defect is at the rear, which may soak
+differently. Consider a permanent frame channel on temp3 (free) later.
+
+WHAT CHANGES BETWEEN COLD AND HOT
+  right rail drop at rear   0.203 -> 0.314 mm   (+0.111, ~4 microns per degC)
+  X beam mid-span curvature  inverts, ~0.2mm swing
+  Z datum                    0.877 mm
+  front rail differential    -0.024 -> -0.019   (unchanged, still the datum)
+
+The rail differential change is monotonic in Y - zero at the front, growing to
++0.114 at the rear. Consistent with the rear support moving while the front
+stays pinned: the same axis as the assembly error, amplified by heat.
+
+-------------------------------------------------------------------------------
+9c. SYNTHESISED HOT MESH - THE WORKING METHOD
+-------------------------------------------------------------------------------
+PROBLEM: the geometry that matters is HOT, but the ALPS cannot complete a fine
+mesh hot (~21-25 point ceiling, section 1d). A fine COLD mesh is easy; a fine
+HOT mesh is impossible. Probing hot at every print start is also slow.
+
+SOLUTION (Trev's, 21/08/2026): measure the fine detail cold, measure the THERMAL
+CORRECTION coarse, add them, and recall the result. Never probe a full mesh hot.
+
+PROCEDURE
+ 1. Cold, machine at rest:   G28, G32, full 7x7 G29.   -> cold_7x7
+ 2. Heat chamber to print temp. Wait for FRAME drift <0.12C/min (temp0), NOT for
+    chamber PV. Takes ~35 min from cold. Record the frame temperature.
+ 3. Hot:  G28, G32, then a 4x4 G29 (16 points).        -> hot_4x4
+ 4. Subsample cold_7x7 at indices 0,2,4,6 in both axes -> cold_4x4
+    (the 4x4 grid points are an EXACT SUBSET of the 7x7 - X at 10/136.7/263.3/390,
+     Y at 16/137.3/258.7/380 - so no registration error and no extra measurement)
+ 5. delta = hot_4x4 - cold_4x4, both mean-removed
+ 6. Bilinear-interpolate delta up to the 7x7 grid
+ 7. synthesised_hot_7x7 = cold_7x7 + interpolated delta
+ 8. Write as heightmap.csv. Recall at print start with G29 S1.
+
+*** USE 16 POINTS (4x4), NOT 4 (2x2). ***
+A 2x2 grid has only four degrees of freedom - constant, X tilt, Y tilt, twist.
+The single largest thermal effect is the X beam INVERTING mid-span, which is
+quadratic and completely invisible from corners. Corners alone would report the
+front edge simply dropping and miss a 0.2mm crown between them:
+    front row, mean-removed    X10     X137    X263    X390
+    cold                      +0.042  -0.010  -0.049  +0.018
+    hot                       -0.079  +0.108  +0.068  -0.097
+                              corners see these, and miss the middle entirely.
+
+MEASURED CORRECTION SURFACE, 21/08/2026 (46C frame, 60C chamber, temp slab):
+   -0.012  +0.222  +0.226  -0.007      Y16 front
+   -0.062  +0.189  +0.217  -0.027
+   -0.162  +0.118  +0.129  -0.071
+   -0.361  -0.093  -0.053  -0.250      Y380 rear
+   X10     X136.7  X263.3  X390
+Two effects superimposed: middle columns rise ~0.22 (beam crowning) while the
+rear-left corner drops 0.36 (rail differential). Verified by reconstruction -
+synthesised edge spreads match measured hot exactly (front -0.020, rear +0.314).
+
+THREE THINGS THIS DOES NOT SOLVE
+ a) DATUM. G29 S1 restores the SHAPE, not Z0, and the datum moves 0.877mm from
+    cold to hot. Print start MUST re-datum hot - a G32, or at minimum a G30, once
+    soaked. That is 3-4 probe points, trivial against the ~25 ceiling.
+ b) TEMPERATURE VALIDITY. The correction belongs to the frame temperature it was
+    measured at. temp0 (bare RTD foil-taped to a front extrusion) gives a frame
+    reading - print start should check the frame is near that value before
+    trusting a recalled map. Frame temp depends on AMBIENT as well as setpoint,
+    so a cold workshop and a warm one are not the same condition.
+ c) INTERPOLATION ERROR, UNQUANTIFIABLE. Validating it needs a hot 7x7, which is
+    precisely what the probe cannot deliver. For scale: reconstructing the cold
+    7x7 from its own 4x4 subset gives 0.026mm rms / 0.065mm worst. The correction
+    surface may be smoother than the absolute surface, or it may not be. Unknown.
+
+A 5x5 hot mesh would shrink (c) but sits right on the probe ceiling - see
+section 9 step 6.
+
+ d) *** OPEN: CHAMBER HEAT vs NOZZLE HEAT. *** The 0.877mm datum shift and the
+    whole correction surface were measured with a COLD NOZZLE - the PT1000 has
+    failed mechanically so the hotend cannot be run. Real printing adds nozzle
+    and heatbreak expansion: ~30-40mm of steel/brass over 20->280C is order
+    0.1mm more. Small against 0.877 but half a first layer.
+    OPERATIONALLY IT DOES NOT MATTER provided the datum is taken at FULL
+    operating condition - chamber soaked AND nozzle at temperature. One G30 then
+    captures both and the split is academic.
+    It only bites this method if nozzle heat changes the SHAPE rather than just
+    the datum. Expectation is datum-only (tip expansion is a pure Z offset, and
+    a moving toolhead should not impose a static pattern on the beam) but that is
+    reasoning, not measurement.
+    TEST WHEN THE PT1000 IS FITTED: take the 4x4 correction twice, once
+    nozzle-cold and once nozzle-hot, and difference them. If it is a constant
+    offset, the correction surface stands as measured.
+
+-------------------------------------------------------------------------------
+9d. WHY THIS MACHINE NEEDS A MESH AND A 160mm ONE DOES NOT
+-------------------------------------------------------------------------------
+Trev's Saladfork (160x160, also ALPS) needs no mesh at all - home cold, tram hot,
+re-establish Z hot, done. That is the correct practice there and insufficient
+here, and the reason is span, not build quality.
+
+The residual after tramming is SMOOTH and QUADRATIC, so it scales as span^2:
+
+  measured, this machine, hot, 380x364mm      range 0.548 mm
+  same surface over a central ~127x121mm      range 0.059 mm
+
+  extrapolated:  160mm span -> 0.088 mm
+                 250mm span -> 0.214 mm
+                 400mm span -> 0.548 mm
+
+At 160mm the residual is inside first-layer tolerance and a mesh buys nothing.
+At 400mm the same geometry gives six times the deviation and a mesh is required.
+Quadrupling the bed area does not quadruple the problem - it sextuples it.
+
+
+
+-------------------------------------------------------------------------------
+10. THINGS THAT WOULD HAVE CAUGHT ME OUT
+-------------------------------------------------------------------------------
+*** A LOOSE TOOLHEAD SILENTLY CORRUPTS EVERY PROBE MEASUREMENT. ***
+The ALPS is a strain gauge - it measures force THROUGH the toolhead, so any loose
+joint sits in the load path. Loose hotend screws doubled the apparent rear-edge
+tilt (0.203 -> 0.419mm) and it did NOT look like noise: it looked like smooth,
+plausible, self-consistent geometry that survived a decomposition and matched a
+dial indicator. It nearly resulted in a rail being shimmed to correct for it.
+CHECK TOOLHEAD FASTENERS BEFORE ANY PROBE SURVEY. And note the DTI was clamped
+to the same hotend, so a second instrument agreeing is NOT independent
+confirmation if it shares the mounting.
+
+- RRF heightmap rows run Ymin FIRST. Row 0 is the FRONT, not the rear.
+- The ALPS enable is de-asserted between probes by retractprobe.g. Reading
+  sensors.probes[0].value outside a probe cycle returns 0 regardless of load -
+  assert M42 P1 S1 first or the reading is meaningless.
+- Heightmap "positive" means bed high, which with a flat bed means the GANTRY IS
+  LOW there. The correction is to RAISE that corner, not lower it.
+- move.compensation type must read "none" before any geometry measurement, or
+  the machine is silently correcting the thing you are trying to measure.
+- move.calibration.initial.deviation reads 0 both when G32 has never run and
+  when it converged perfectly. It cannot distinguish them.
+- bed.g exits its loop on convergence OR the 15-iteration cap. Completing G32 is
+  NOT proof it converged.
+- The final centre G30 in bed.g had NO result check until 21/08. It failed once
+  ("probe already triggered before probing move started"), left the Z datum
+  unset, and displaced a whole heightmap by 0.25mm while reporting success.
+  Fixed: Z5 lift + 1s release dwell + result check. Do not remove them.
+- EVERY conclusion that survived this survey was measured at least TWICE. Every
+  one that did not survive - run 1's rear tilt, the probe-compliance theory, the
+  suspicion that the hot interior inversion was probe bias - rested on a single
+  measurement. Measure twice before acting, always. It is cheap and it has been
+  decisive three separate times.
+- LOOSE TOOLHEAD ALSO INVALIDATES INPUT SHAPING. The accelerometer is on the
+  toolhead, so a loose hotend is a spring-mass right next to the sensor. The
+  M593 P"zvd" F127 tuning of 19/08/2026 - and its validation figures (X ring-down
+  rms 0.12 -> 0.08, 121Hz peak 0.14 -> 0.03) - were all measured through the loose
+  joint. Re-run the whole characterisation from scratch, do not just retune F.
+  The 127Hz "structural gantry mode" may shift, or may turn out to have been two
+  modes blurred together.
+- A repeatable measurement can still be a WRONG measurement. Run 1 was smooth,
+  self-consistent, survived a polynomial decomposition and matched a dial
+  indicator - and was still double the truth, because the toolhead was loose and
+  the indicator was bolted to the same loose toolhead.
+- ALWAYS take a second heightmap after a power cycle before acting on the first.
+  That single practice caught all of the above.
+
+=======================================================================================================
+END
+=======================================================================================================

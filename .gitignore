@@ -1,0 +1,22 @@
+# ── Credentials ───────────────────────────────────────────────────────────────
+# Matched by pattern, not path, so they stay caught if archives move around.
+# The pre-commit secret scan is the real backstop; this is the first line.
+duetBackup/
+*.config.bak
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+.env
+
+# ── Third-party documentation ─────────────────────────────────────────────────
+# Kept locally, linked from the README rather than mirrored into a public repo.
+#   gcodes.txt          — Duet3D G-code reference, refresh cmd in CLAUDE.md
+#   print_tuning_guide  — Ellis' Print Tuning Guide
+gcodes.txt
+print_tuning_guide.txt
+
+# ── Upstream slicer source ────────────────────────────────────────────────────
+# 161M nested git checkout of oozebot/preFlight at f74dc69 (v1.3.0).
+# Re-clonable; pinned commit is recorded in slicer_notes.md.
+preFlight/

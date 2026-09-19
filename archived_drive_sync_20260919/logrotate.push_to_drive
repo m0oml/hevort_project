@@ -1,0 +1,10 @@
+/home/trev/push_to_drive.log {
+    weekly
+    rotate 8
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    su trev trev
+}

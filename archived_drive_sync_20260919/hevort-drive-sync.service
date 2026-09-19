@@ -1,0 +1,13 @@
+[Unit]
+Description=HevORT Drive sync watcher
+After=network.target
+
+[Service]
+Type=simple
+User=trev
+ExecStart=/home/trev/watch_and_push.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

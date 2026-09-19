@@ -1,0 +1,49 @@
+[Unit]
+Description=Claude Code Remote Control session (HevORT project)
+Documentation=file:/home/trev/claude_remote.sh
+
+# lightdm autologin-user=trev means the systemd --user instance comes up at
+# boot without anyone touching the keyboard, so default.target is reached on
+# its own. Same reasoning as hevort-smart-blank.service: nothing here binds to
+# graphical-session.target, which labwc-via-lightdm never activates.
+#
+# Deliberately NOT ordered after any network target: user units live in their
+# own target namespace and cannot usefully Want the system's
+# network-online.target. Boot-time "no network yet" is handled by the retry
+# loop in claude_remote.sh instead.
+After=default.target
+
+# Belongs in [Unit], not [Service]. Without it a few fast failures would latch
+# the unit into a failed state and there would be no remote way back in.
+StartLimitIntervalSec=0
+
+[Service]
+# `tmux new-session -d` returns as soon as it has spoken to the tmux server,
+# and that server may already exist outside this unit's cgroup (if trev started
+# tmux by hand first). There is therefore no main process for systemd to track,
+# which rules out Type=simple and Type=forking. oneshot + RemainAfterExit keeps
+# the unit active on the strength of the command having succeeded; supervision
+# of claude itself is the restart loop in the script.
+Type=oneshot
+RemainAfterExit=yes
+
+# User units get a minimal PATH. claude lives in ~/.local/bin and the `duet`
+# helper in /usr/local/bin — the session is useless without both.
+Environment=PATH=/home/trev/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+# -A attaches to an existing "claude" session instead of failing with
+# "duplicate session", so a hand-started session is adopted rather than
+# fought over; -d keeps that adoption from trying to attach a terminal.
+ExecStart=/usr/bin/tmux new-session -dA -s claude -c /home/trev/hevort_project /home/trev/claude_remote.sh
+ExecStop=/usr/bin/tmux kill-session -t claude
+TimeoutStopSec=30
+
+# NOTE: this only captures output from the tmux command itself, which is
+# silent on success. The session transcript is the tmux pane; the restart
+# history is /home/trev/claude_remote.log. `journalctl --user-unit=claude-remote`
+# will look empty and that is expected, not a fault.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

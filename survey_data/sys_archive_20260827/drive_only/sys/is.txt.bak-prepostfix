@@ -1,0 +1,91 @@
+================================================================================
+HevORT — Y-AXIS VIBRATION BASELINE (pre ALPS screw fix)
+Session 19-20/08/2026. Reference data for post-fix comparison.
+================================================================================
+
+WHAT CHANGED SINCE BASELINE
+Loose screws found securing ALPS strain-gauge unit to Goliath water block.
+Hotend was perceptibly wobbly by hand. Screws now tightened.
+Question: which measured modes were caused by this, and which survive?
+
+TEST CONDITIONS — MUST MATCH EXACTLY OR COMPARISON IS INVALID
+  Accelerometer  LIS2DW, MB6HC toolboard, spi.cs3+spi.cs2
+  Position       NOZZLE (~70mm below X rail) — NOT extruder body
+  Orientation    M955 P0 C"spi.cs3+spi.cs2" I65
+  Shaper OFF     M593 P"none"
+  Acceleration   M201 X8000 Y8000        (0.82g — avoids ±2g clipping)
+  Speed          M203 X15000 Y15000      (250 mm/s cruise)
+  Toolhead X     X=200 (mid-span — 204Hz antinode, strongest signal)
+  Drive mode     D4 closed loop, all four. Verify M569 P70.0 .. P73.0
+                 individually before capturing.
+  Sweep          plugin Y sweep, file 1-Y98-293-0-none.csv
+
+  Restore after: M201 X35000 Y35000 / M203 X30000 Y30000 / M593 P"zvd" F127 S0.05
+
+ANALYSIS METHOD
+  Sample rate 1607 Hz (read from CSV footer, do not assume)
+  Drop final row before parsing — it is "Rate NNNN, overflows N", not data
+  Columns: Sample,X,Y,Z  → Y column = machine Y at I65
+  Cruise window: samples 250:950
+  Detrend, Hanning window, rFFT, amplitude = |FFT|/n*4
+  Check clipping: count |a| >= 1.995 — ±2.000g is hard full scale at 14-bit
+  Baseline runs clipped 13-14 samples on Y; if clipping rises, amplitude
+  comparison is understated and invalid.
+
+BASELINE NUMBERS TO BEAT (nozzle, 250 mm/s, X=200, I1000, unshaped)
+  Y cruise rms         0.477 / 0.477 / 0.537 g   (3 runs)
+  204Hz band peak      218Hz(0.370) / 216Hz(0.369) / 211Hz(0.498)
+  312Hz                0.197
+  Y clipping           13-14 samples
+
+  Cross-axis during Y move @500mm/s (for reference):
+    215Hz  aX 0.294  aY 0.524  aZ 0.072
+    312Hz  aX 0.023  aY 0.310  aZ 0.086
+
+PREDICTIONS — STATED IN ADVANCE
+  312 Hz SHOULD LARGELY DISAPPEAR.
+    Evidence: collapsed 0.197 -> 0.032 (6x) when sensor moved from nozzle to
+    extruder body, i.e. above the probe mount. A 6x drop across that joint means
+    the compliance is below it — in the hotend/ALPS/water block stack.
+    Loose screws are exactly that. Expect large reduction.
+
+  204 Hz SHOULD SURVIVE.
+    Evidence 1: dropped only 1.8x across the same joint (0.370-0.498 -> 0.210),
+    matching pure lever-arm geometry. Sensor moved 70mm below rail to 40mm above;
+    predicted ratio 40/70 = 0.57, measured 0.42-0.61. Geometry, not a fix.
+    Evidence 2: X-position test, Y sweep at three toolhead positions —
+      X=20   197Hz (0.057)   rms 0.234
+      X=200  204Hz (0.222)   rms 0.312
+      X=380  216Hz (0.040)   rms 0.233
+    4-5x larger at mid-span, frequency held. Antinode centre, nodes at ends =
+    mode shape of the X beam (20x20x3mm 6063, pinned by Y carriages).
+    Diagnosis: first torsional mode, driven by toolhead CoM offset below the
+    tube shear centre. A loose hotend screw cannot produce a mid-span antinode.
+
+  IF 204 Hz ALSO DROPS SUBSTANTIALLY, the beam-torsion diagnosis is wrong.
+  Two prior hypotheses already failed this session (encoder calibration;
+  rail ball-pass). Do not assume — check.
+
+ALSO WORTH RE-CHECKING AFTER THE FIX
+  Wobble by hand — should be gone
+  G31 trigger height (currently P500 X0 Y0 Z0.7) was measured through the
+  loose joint. Re-probe.
+  bed.g tramming likewise.
+
+CONFIRMED SEPARATELY — NOT AFFECTED BY THIS FIX
+  127 Hz gantry bending mode. Measured 8 ways (ring-down across D2/D4,
+  I500/I1000, both axes) at 121-147 Hz. Resonance-lab plugin independently
+  gave X 128.6Hz / Y 120.8Hz. Shaper committed: M593 P"zvd" F127 S0.05
+  Verified: X ring-down rms 0.12 -> 0.08, 121Hz peak 0.14 -> 0.03,
+  accel clipping eliminated.
+
+METHOD WARNINGS LEARNED THE HARD WAY
+  - Single captures have ~15% run-to-run scatter. Three runs minimum before
+    trusting any modest effect. An apparent I1000->I500 improvement vanished
+    entirely once repeats were run.
+  - M569.1 with parameters DROPS DRIVERS TO OPEN LOOP. Re-home after, and
+    verify with M569 Pxx.0 (not M569.1, which reports PID but not mode).
+  - Resonance-lab plugin sweep is quantisation-limited above ~100Hz: at 80
+    steps/mm and its 60mm/s^2-per-Hz excitation, 135Hz = 2.2 microsteps of
+    commanded motion. Cannot usefully probe 204Hz. Use decel ring-down instead.
+================================================================================

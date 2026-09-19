@@ -1,0 +1,352 @@
+===============================================================================
+HevORT FRAME & BED GEOMETRY - RESULTS
+Measured 21-22/08/2026.  Rewritten clean 22/08 - supersedes all earlier versions.
+Working detail and superseded drafts: /home/trev/hevort_survey_data/
+===============================================================================
+Bed at time of measurement: TEMPORARY damaged granite slab (no heater) with a
+5mm FR4 sheet laid loose on top. Surface figures below belong to that stack and
+must be re-measured when the real heated bed arrives. The MACHINE figures do not.
+
+-------------------------------------------------------------------------------
+1. WHAT IS ACTUALLY WRONG
+-------------------------------------------------------------------------------
+a) RIGHT Y RAIL LOW AT REAR - shimmable, and the only mechanical fault worth
+   correcting. Rail differential front-to-rear:
+        cold 23C   0.344 mm      45C   0.372 mm      60C   0.358 mm
+   TEMPERATURE INDEPENDENT to +/-0.02mm across 23K. Measure it cold.
+   -> shim schedule, section 3.
+
+b) X BEAM BOWS WITH TEMPERATURE - not correctable, mesh it.
+   -11.7 microns/K, LINEAR in frame dT (verified at 3 temperatures: the change
+   at 45C is 0.597 of the total to 60C, where linear predicts 0.571).
+   Cause: steel MGN9 rail on a 20x20x3 6063 beam behaves as a bimetallic strip.
+   A shim is a constant and this is not - it cannot be corrected mechanically.
+   The real fix is the dual MGN9 sandwich already on the project list: symmetry
+   cancels the couple, and it also addresses the 215Hz torsional mode.
+
+c) Z DATUM MOVES A LOT WITH TEMPERATURE.
+        cold -> 45C   +0.511 mm       cold -> 60C   +0.782 mm
+   Linear in chamber dT to ~1%. Harmless IF you re-datum hot; fatal if you home
+   cold and print hot. Print start MUST re-datum once soaked.
+
+d) THE BED IS NOT THE PROBLEM. It rests freely on three points, so it can only
+   contribute a PLANE, and G32 nulls a plane at every print. Its mounting needs
+   no work.
+
+e) THE FRAME NEEDS NO LEVELLING. 4.35mm of shim under one foot moved the twist
+   by 6 microns (0.0014 mm per mm). Machine position on the bench is not a
+   variable. Do not buy levelling feet or a stand.
+
+f) SURFACE ERRORS, for information - the mesh handles these, no action:
+        granite  0.114 mm astigmatic (it is NOT a flat reference)
+        FR4      0.028 mm astigmatic
+   The FR4's warp happens to oppose the granite's and cancels much of it. Its
+   CURRENT ORIENTATION IS THE GOOD ONE - 0.395mm range vs 0.635mm rotated 90.
+   Mark it before ever lifting it.
+
+g) REPEATABILITY: 4.7 microns cold, 8-10 microns hot, rms between back-to-back
+   maps. The machine measures far better than it is built.
+
+-------------------------------------------------------------------------------
+2. CAUSE FOUND - READ BEFORE CUTTING SHIMS
+-------------------------------------------------------------------------------
+RESOLVED 22/08/2026: the twist term is sensitive to Y RAIL FASTENER TORQUE.
+The twist CHANGED OVERNIGHT 21->22/08 with the machine idle: 0.040 -> 0.122mm
+(machine-only figures, surfaces removed). Every other candidate was ruled out
+by measurement: bed mount (plane only, can't twist), bench/support (would need
+68mm of bench error), granite orientation (0.017mm), frame temperature (too
+small), umbilical (Key-Bak is 4oz = 1.11N = 4 microns, and a toolhead force
+makes a BOWL not a twist). Belts were not touched.
+This was flagged as a candidate at the time and not confirmed ("screws were
+tightened on the machine that night - input shaping work"). Confirmed later
+22/08/2026: Trev slackened and retightened the Y rail screws for an input-
+shaping session ("had bollocked them up way too tight"). A same-day cold 4x4
+mesh taken straight afterwards moved by ~50 microns (corner-twist metric 0.339
+-> 0.287mm) relative to the mesh taken before that retightening - same
+mechanism, same direction of effect, caught in the act this time.
+This is the SAME kind of coupling as the X beam bimetallic bow (section on the
+X beam, steel rail bolted to aluminium extrusion) - the rail clamps to the
+frame member and the member deflects with clamping state - except the driving
+variable here is FASTENER TORQUE, not temperature. Retorque the rail and the
+twist moves, by tens of microns per event, comparable to a meaningful fraction
+of the shim schedule itself.
+CONSEQUENCE: the shim schedule below is only as good as the fastener torque it
+was measured at. It is NOT a fixed machine constant like the X beam bow or the
+Z-datum thermal shift - it is a function of how tight these screws currently
+are. Before cutting or fitting shims:
+  1. Do not touch the Y rail fasteners between the reference mesh and fitting.
+  2. If they must come out (to insert shims, they will), retighten to the same,
+     repeatable spec every time - a torque wrench and a recorded torque value,
+     not "by feel". Whatever value is chosen, use it for the final cold
+     reference mesh AND for final assembly, so the schedule and the built
+     machine match.
+  3. Re-measure the cold twist immediately before cutting AND again after
+     fitting, at that same spec, per the standing instruction below.
+DECIDED 22/08/2026: Trev will use a torque wrench, ratchet head (not a preset
+screwdriver). All rail fixings are M3 SHCS. X beam rail is tapped directly into
+the aluminium beam wall (lower ceiling, ~1.0-1.5 N.m standard there to avoid
+stripping the thread) - the Y rails run in full 3030 steel T-nuts, which support
+more (M3 into steel is good for ~1.2-2.0 N.m before yield on a decent alloy
+screw). SPEC SET: 2.0 N.m. Reason for the change from the original 1.0 N.m:
+genuine ratchet-head torque wrenches do not click reliably below about 2 N.m -
+the mechanism needs more leverage/spring travel than a low setting gives it, so
+sub-2Nm work is normally done on a preset screwdriver instead. Since the Y rail
+joint (steel T-nut) can safely take 2.0 N.m, moved the target up to the bottom
+of a real ratchet's range rather than force the screwdriver tool. Repeatability
+is what matters here, not hitting exactly 1.0 - a click wrench is just as
+repeatable dialled to its minimum as anywhere else in range.
+TOOL BOUGHT: CASOMAN 1/4" drive click torque wrench, 1-25 N.m variant, 72-tooth
+head, dual direction, ~£19, Amazon UK. Chosen over the Venzo (2-15 N.m) because
+the fine 72-tooth head needs only ~5deg of swing arc per click - the Venzo's
+coarser ratchet needed more swing arc than the rail screw locations allow. 2.0
+N.m sits well inside this wrench's range rather than at the floor, which is a
+better spot for it too. Confirm the correct hex bit (2.5mm for M3 SHCS) is
+fitted before use - not confirmed included in the base set.
+CAVEAT: confirm the rail screws are alloy steel (12.9 or similar), not plain A2
+stainless, before committing to 2.0 N.m - stainless M3 is usually derated lower
+(~1.3-1.5 N.m) to avoid galling. If they're stainless, dial back to ~1.5 N.m and
+accept it's below this wrench's rated minimum (a click wrench under-torques
+rather than over-torques below its floor, which is the safer failure direction,
+but log which number was actually used).
+DO NOT DEVIATE FROM THE CHOSEN NUMBER once assembly starts.
+SUPERSEDED 22/08/2026: 2.0 N.m above was a generic-table figure, PENDING. Trev
+is instead going to characterise the real number directly - retorque the rail,
+run input shaping, and use the resonance/ringing result (not a chart) to find
+the torque this specific frame actually wants, since input shaping is what
+caught the screws being over-tight in the first place. THE REAL SPEC IS NOT SET
+YET. Do not cut or fit shims, and do not treat 2.0 N.m as final, until Trev
+returns with the number input shaping settles on. Once that number is in hand:
+retorque every Y rail screw to it, cold 4x4 mesh immediately after (no other
+work in between) as the new reference twist, then shim, then re-torque/re-mesh
+to the same number again after fitting.
+
+UPDATE 23/08/2026 — THIS PLAN'S PREMISE IS WRONG. See sys/is.txt PIVOT section
+for the full data. The input-shaping torque sweep this section anticipated was
+run: original torque, 1.0 N.m, "by feel" twice, fully slack, and totally loose,
+all n=3, full Y-position and belt-diagonal accelerometer sweeps. Result is
+MONOTONIC with NO settled number - vibration falls all the way to zero clamp
+force, which gave the best result of the whole series. There is no torque that
+both locates the rail and avoids exciting it; every real clamping force
+deflects the frame member, exactly the mechanism identified above, just now
+confirmed dynamically as well as via the static bed-mesh twist.
+Practical consequence: "wait for the number input shaping settles on" cannot be
+satisfied as written, because no such settled number exists in this range.
+Options going forward: (a) accept a minimum torque that reliably LOCATES the
+rail (not zero - a rail that can slide is a separate real problem, already
+found once this session) and treat the residual ringing/twist at that torque
+as a characterised, compensated machine constant, the same way the X beam bow
+above is accepted and meshed rather than eliminated; or (b) stiffen the joint
+itself (backing plate behind the T-nut wall, or through-bolt instead of T-nut)
+so clamping no longer deflects the extrusion, which would let a normal torque
+be used without this trade-off.
+NOT YET ANSWERED: whether this compliance is RIGHT-rail-specific (matching the
+static shim fault, "do NOT shim the left rail" below) or a general property of
+the T-nut joint on both sides — every torque test so far adjusted both rails
+together. Isolate before finalising anything: adjust one rail at a time.
+BASELINE RECORDED 22/08/2026: both belts read 2.6 on Trev's tension meter, X
+homed, Y0, matched left/right. Pluck-tone check: upper belt ~120Hz, lower belt
+~120-123Hz (by ear, hand-plucked - treat as +/-5Hz). Consistent with matched
+tension. Reference point if tension is ever suspected - re-check this position
+and both readings before assuming drift.
+NOTE: 120-123Hz sits close to the 121-147Hz structural gantry ring-down measured
+19/08/2026 (M593 P"zvd" F127, project.txt line ~248). Belt pluck tone and gantry
+structural mode are different things measured differently and this may be
+coincidence - not asserted as related, just flagged because it is close enough
+to be worth remembering if the input-shaping re-run (already planned - project
+notes, screws were loose during that tuning) turns up a similar frequency.
+
+INDEPENDENT CONFIRMATION - RESONANCELAB, 20/08/2026 (predates this weekend's
+shim work, still valid as a belt-only check): sys/accelerometer/rlab-belta-xy-
+20260820211035.csv and rlab-beltb-xy-20260820211118.csv, swept excitation, peak
+response 285Hz (A) vs ~277Hz (B), ~3.6% apart - MATCHED. Independent of the
+22/08 hand-pluck check above (~120 vs ~120-123Hz): different excitation method,
+likely a different mode, numbers don't need to agree - but both calls agree the
+belts are matched, from two dates and two methods.
+=> The shim schedule is built on the CURRENT value. If the twist moves again,
+   the shims are wrong. Re-measure immediately before cutting, and again after.
+
+UPDATE 23/08/2026, LATER — CONCLUSION REACHED. TORQUE WAS NEVER THE VARIABLE.
+Full input-shaping data in sys/is.txt. Summary: the torque sweep the PIVOT
+section above anticipated was run (original / 1.0 N.m / by-feel x2 / slack /
+zero clamp, n=3 each, full Y-position + belt-diagonal sweeps) and came back
+MONOTONIC with no settled number - vibration fell all the way to zero clamp
+force. No torque both locates the rail and avoids exciting it, because every
+real clamping force deflects the frame member - the same mechanism as the
+static twist above, now confirmed dynamically too. Trev's conclusion:
+clamping a straight rail against a mounting surface that isn't true TWISTS
+THE CARRIAGE, and that produced the whole day's IS data (no torque sweet
+spot, unreproducible "by feel" attempts, amplitude-dependent onset, a front
+elevation reading that appeared once and did not reproduce on retest).
+SHIMMING IS THE FIX, not a torque number.
+
+Trev fitted a 0.5mm SLIP GAUGE (temporary stand-in - real shim stock not yet
+in hand) to the rear-right rail, rails pinned front/back only. Cold 4x4 mesh
+re-run twice back-to-back to confirm:
+
+  corner-twist metric   before shim (23/08 09:10)   0.283mm
+                         after shim  (23/08 18:27)   0.011mm
+                         repeat      (23/08 18:33)   0.024mm
+
+13-micron spread between the two post-shim runs - in line with the
+established cold-to-cold noise floor (~10um), so this is a real, repeatable
+effect, not probe noise. This independently confirms the section 3 schedule
+(0.55mm at the rear fastener) by a completely different method - physical
+shim + dynamic/static re-mesh - rather than the static survey calculation
+alone. Raw maps: hevort_survey_data/mesh_4x4_cold_20260823_{0910,1827,1833}.csv.
+
+CONFIRMED ON THE FULL 7x7 GRID, 23/08/2026 22:01 - BEST MAP THE MACHINE HAS
+EVER PRODUCED. Cold 7x7 (49 points, mesh.g as-is), machine idle beforehand:
+
+  corner twist   -0.005mm      (4x4 post-shim runs read +0.011 / +0.024)
+  deviation       0.067mm      LOWEST in the whole archive - every 22/08 map
+                               was 0.11-0.22, today's post-shim 4x4s 0.076/0.077
+  min/max        -0.177 / +0.146
+
+Deviation fell even though the 7x7 samples 3x the points of the 4x4, which
+normally catches MORE structure, not less. Least-squares decomposition of the
+map (peak-to-peak across the bed, normalised fit, script in scratchpad):
+
+  bowY    0.125    bowl along Y     ]  opposite signs = astigmatic saddle
+  bowX    0.078    arch along X     ]
+  tiltY   0.047    ]  pure plane - G32 nulls these at every print
+  tiltX   0.038    ]
+  twist   0.012    GONE (was ~0.28 before the shim)
+  residual rms 0.029
+
+The two curvature terms carry opposite signs - an astigmatic saddle, which is
+the documented granite (0.114mm astigmatic, section on the bed) plus the X
+beam bimetallic bow. BOTH ARE ALREADY CHARACTERISED AS NOT SHIMMABLE - mesh
+them, do not chase them with shims. The tilt terms are irrelevant, G32 removes
+them every print. So the shimmable fault is FIXED and what remains is exactly
+the set of terms this survey already says to live with and compensate.
+Raw map: hevort_survey_data/mesh_7x7_cold_20260823_2201.csv.
+=> USE THIS MAP AS THE BENCHMARK when the real shim stock goes in. The current
+   fix is still the temporary slip gauge; the graduated section 3 schedule
+   fitted properly should match or beat 0.067mm deviation / ~0.00mm twist.
+
+TOOL/SPEC CHANGE: 1.0 N.m was tested directly and found WAY TOO TIGHT -
+consistent with "no settled torque number" above, since 1.0 N.m is well
+inside the range that still deflects and excites the frame. The CASOMAN
+ratchet (2.0 N.m floor, bought for the now-abandoned "find a settled torque"
+plan) no longer fits what's needed. Trev has ordered a TORQUE SCREWDRIVER
+instead (finer control, lower range) to find and hold a light, "just locates
+the rail without squeezing it" spec - not a load-bearing structural torque,
+just enough to stop the rail sliding. Exact number not yet set.
+
+REVISED BLOCKER: shim stock (OLYCRAFT, section 3 schedule) has NOT arrived
+yet - that is the actual blocker on cutting/fitting now, not a torque number.
+Once stock is in hand: fit real shims in place of the slip gauge, tighten to
+whatever light spec the torque screwdriver settles on, cold 4x4 mesh to
+confirm, done.
+NOT YET CHECKED: front-right fastener is suspected loose from an earlier
+test today (a flickering front vibration reading that appeared once and
+vanished on retest - inconsistency, not a stable defect signature). Confirm
+it is properly tight before drawing any conclusion about a front shim - see
+is.txt and [[hevort-y-vibration-asymmetry-umbilical]] for full detail.
+
+-------------------------------------------------------------------------------
+3. SHIM SCHEDULE - RIGHT Y RAIL ONLY
+-------------------------------------------------------------------------------
+MGN12, 500mm rail, 25mm pitch, two centre fasteners then every other hole = 10
+fixings. Rail centres 550mm apart (measured). Scale 550/380 = 1.447. Zeroed on
+fastener 1. From cold data (best repeatability); fit residual 0.006mm.
+
+  #   rail mm   machine Y   exact    USE     build from
+  1      37.5      -17.5    0.000    0.00    (datum - nothing)
+  2      87.5       32.5    0.048    0.05    0.05
+  3     137.5       82.5    0.101    0.10    0.1
+  4     187.5      132.5    0.160    0.15    0.1 + 0.05
+  5     237.5      182.5    0.223    0.20    0.2
+  6     262.5      207.5    0.256    0.25    0.2 + 0.05
+  7     312.5      257.5    0.327    0.35    0.2 + 0.1 + 0.05
+  8     362.5      307.5    0.403    0.40    0.4
+  9     412.5      357.5    0.484    0.50    0.4 + 0.1
+ 10     462.5      407.5    0.570    0.55    0.4 + 0.1 + 0.05
+
+RULES
+- Shims must span the FULL 12mm rail width. Washer-sized shims let the rail
+  bridge and deform locally - defeats the point and wears the bearings.
+- Grade it, never step it. Every fixing gets its own thickness.
+- Fastener 1 gets nothing. All correction added going rearward.
+- Do NOT shim the left rail. Do NOT shim the X beam (section 1b).
+- Fasteners 1 and 10 are extrapolated beyond the probed Y16-380. #10 is the
+  largest in the stack - check it with an indicator once the rail is back on.
+- Re-measure everything after shimming; the shim changes what these describe.
+
+ORDER
+  ORDERED 22/08/2026: OLYCRAFT 27pc 304 stainless shim assortment, 150x50mm
+  sheets, thicknesses 0.01/0.02/0.03/0.05/0.1/0.12/0.15/0.2/0.3mm, 3 of each.
+  NOTE it has no 0.4mm sheet - the top of the schedule builds from what it has:
+      0.35 = 0.2+0.15    0.40 = 0.2+0.2    0.50 = 0.3+0.2    0.55 = 0.3+0.2+0.05
+  Max 3 layers. Cut to 12mm wide (full rail width) x ~25mm.
+  Each sheet yields ~24 pieces, so there is ample material for remakes.
+  Do NOT use polymer/plastic shim packs - they creep under bolt preload.
+  replacement hotend PT1000 (M3 screw-in) - the current one is a bare RTD, now
+  foil-taped to the frame as a temperature probe; hotend temp is unavailable
+
+-------------------------------------------------------------------------------
+4. OPERATING PROCEDURE
+-------------------------------------------------------------------------------
+SOAK CRITERION - do NOT use frame temperature. temp0 flattens long before the
+machine does; it read +0.03 C/min with the machine still 0.44mm from
+equilibrium. The frame is only partly insulated, so different members have
+different time constants and no single sensor can represent it.
+Use the Z DATUM instead - it integrates the whole loop. Probe bed centre with
+G30 S-1 every 3 min and wait for it to stop moving.
+NOTE THE DATUM OVERSHOOTS AND COMES BACK: it peaked 10 min before reversing at
+~2 microns/min during the 60C soak. Bed and Z system warm first (datum up), then
+the towers catch up (datum down). A criterion that waits for "stopped changing"
+will fire twice - once near the peak, once for real.
+
+MESH: the ALPS cannot complete a large mesh in a hot chamber - it latches
+"probe already triggered" after ~21-25 points. Known behaviour of this probe.
+Use 4x4 hot. A cold 7x7 is fine.
+
+SYNTHESISED HOT MESH: fine 7x7 cold, coarse 4x4 hot, subsample the cold map at
+indices 0,2,4,6 in both axes (the 4x4 points are an exact subset), take the
+difference, bilinear-interpolate up to 7x7, add to the cold map, recall with
+G29 S1. Re-datum hot regardless - G29 S1 restores shape, not Z0.
+The recalled map dies if the FR4 is lifted. Clip or magnetically hold it.
+
+-------------------------------------------------------------------------------
+5. TRAPS - ALL OF THESE COST HOURS
+-------------------------------------------------------------------------------
+- M558 SILENTLY WIPES THE G31 TRIGGER HEIGHT. Any runtime M558 reset it from
+  -0.030 to an old 0.700 placeholder while config.g still read -0.030. Every map
+  taken in that window was displaced 0.73mm. ALWAYS re-issue G31 after M558, in
+  that order. Verify: M409 K"sensors.probes[0]" -> triggerHeight must be -0.030.
+- G30 S-1 reports the RAW trigger height; G29 stores it with G31 Z already
+  subtracted. Comparing the two directly looks like a 0.7mm fault and is not one.
+- RRF heightmap row 0 = Ymin = FRONT.
+- Heightmap positive = bed reads HIGH = the gantry sits LOW there.
+- bed.g's final centre G30 can fail silently and leave the datum unset, which
+  displaces a whole map while reporting success. The result check is now in
+  bed.g - keep it.
+- DO NOT DRIVE THIS MACHINE WITH ONE "CodeConsole -c" PER COMMAND. Each
+  invocation opens a fresh socket to DCS, allocates a code channel and tears it
+  down. Dozens in tight loops correlate with the unexplained M112 halts, and the
+  event log caught the mechanism: "Transfer timeout waiting for TfrRdy (waited
+  504ms, 0 glitches)" - the Duet too busy to answer, not electrical noise.
+  Halts only ever occurred during direct machine control, never in normal use.
+  Batch commands down ONE connection instead:
+      printf 'M114\nM409 K"state.status"\n' | CodeConsole
+  SbcTransferTimeout also raised 500 -> 2000ms in /opt/dsf/conf/config.json
+  (bak: config.json.bak-timeout). Needs a duetcontrolserver restart, not M999.
+- M929 event logging is now enabled (eventlog.txt, on the SD card, survives
+  reboots). Added after repeated unexplained M112 halts with no persistent log.
+- Rebooting the Pi does NOT reset the Duet - it has its own power, and config.g
+  does not re-run. Use M999.
+- chamber_abort.g sets chamberSP=0, which makes chamber_heat.g's wait condition
+  immediately false, so it exits the normal way and never clears chamberAbort.
+  Still unfixed.
+- daemon.g line 49: `if { var.plcRegs != null }` throws "unknown variable" when
+  the Modbus read fails, aborting the file. Needs exists() guarding it.
+
+-------------------------------------------------------------------------------
+6. CONFIRMED GOOD - DO NOT RE-INVESTIGATE
+-------------------------------------------------------------------------------
+M92 Z800 correct (caliper-verified). G31 -0.030 correct (slip gauge, +/-0.005).
+Probe type P9 is load-bearing - P5 stops the enable macros running and kills the
+probe. Driver map: 0.0 = front-right, 0.1 = rear, 0.2 = front-left, matching
+M671. Front rails are level and are the datum. Both rails crown ~0.2mm common
+mode - real, but it induces no roll and the mesh handles it.

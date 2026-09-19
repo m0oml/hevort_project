@@ -1,0 +1,7 @@
+RepRapFirmware height map file v2 generated at 2026-08-26 16:00, min error -0.517, max error 0.160, mean -0.213, deviation 0.203
+axis0,axis1,min0,max0,min1,max1,radius,spacing0,spacing1,num0,num1
+X,Y,10.00,390.00,16.00,380.00,-1.00,126.65,121.32,4,4
+ -0.172,  0.128,  0.160, -0.161
+ -0.411, -0.054, -0.004, -0.367
+ -0.480, -0.150, -0.081, -0.404
+ -0.517, -0.257, -0.222, -0.419
