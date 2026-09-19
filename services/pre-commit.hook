@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# pre-commit — refuse to commit anything that looks like a credential.
+#
+# This repo is PUBLIC and is written by an unattended watcher, so there is no
+# human between a file landing in the directory and it being published. This
+# hook is that human. It scans the STAGED content and aborts the commit on a
+# match.
+#
+# Two credentials have already turned up in synced directories on this setup
+# (duetBackup.config on the Pi, duetBackup.config.bak under survey_data), which
+# is why this exists rather than trusting .gitignore alone.
+#
+# Bypass with `git commit --no-verify` ONLY after confirming a false positive.
+# On a public repo a pushed secret is scraped within minutes and must be
+# treated as burned even after a history rewrite.
+
+set -u
+
+# One alternation, one pass per file. Patterns are anchored with -e so that
+# those starting with "-" (private key headers) are not parsed as grep options
+# — that bug silently disabled the private-key check when this was first written.
+PATTERN='github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|-userToken[[:space:]]'
+
+mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACM)
+[ "${#staged[@]}" -eq 0 ] && exit 0
+
+hits=0
+for file in "${staged[@]}"; do
+    [ -z "$file" ] && continue
+    # -I skips binaries; read the staged blob, not the worktree.
+    if match=$(git show ":$file" 2>/dev/null | grep -nEI -m1 -e "$PATTERN"); then
+        echo "pre-commit: possible credential in $file" >&2
+        echo "            ${match:0:120}" >&2
+        hits=$((hits + 1))
+    fi
+done
+
+if [ "$hits" -gt 0 ]; then
+    cat >&2 <<'MSG'
+
+COMMIT ABORTED — this repo is public.
+
+Remove the secret, or add the path to .gitignore, then commit again.
+If the value is real, revoke it first: it does not stop being compromised
+just because the commit was blocked.
+MSG
+    exit 1
+fi
+
+exit 0

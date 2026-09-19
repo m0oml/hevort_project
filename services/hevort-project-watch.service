@@ -1,0 +1,24 @@
+[Unit]
+Description=HevORT project watcher (commits ~/hevort_project to git on change)
+Documentation=file:/home/trev/hevort_project_watch.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trev
+Group=trev
+ExecStart=/home/trev/hevort_project_watch.sh
+
+# Reconciles on start, so a restart is never lossy.
+Restart=always
+RestartSec=5
+
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+Environment=HOME=/home/trev
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=HevORT config watcher (commits /opt/dsf/sd/{sys,macros} to git on change)
+Documentation=file:/home/trev/hevort_config_watch.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trev
+Group=trev
+ExecStart=/home/trev/hevort_config_watch.sh
+
+# The script reconciles on start, so a restart is never lossy — it picks up
+# whatever changed while it was down. Restart freely.
+Restart=always
+RestartSec=5
+
+# Needs ~/.ssh/id_ed25519_github to push, and `duet` (in /usr/local/bin) to put
+# a message on the printer display when the secret scan blocks a commit.
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+Environment=HOME=/home/trev
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

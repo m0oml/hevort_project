@@ -36,8 +36,8 @@ Two machines now. Keep them straight.
 ```
 /opt/dsf/sd/sys/     config.g, bed.g, mesh.g, home*.g, probe macros
 /opt/dsf/sd/macros/  chamber, Frame/ (input shaping), Speed/
-~/                   duet, watch_and_push.sh, push_to_drive.sh, cleanup_drive.sh,
-                     hevort_smart_blank.sh, duet_bug_report_20260829.txt
+~/                   duet, hevort_config_watch.sh, hevort_smart_blank.sh,
+                     duet_bug_report_20260829.txt
 ```
 
 **The Pi no longer has a copy of this project.** `~/hevort_project` was archived
@@ -48,9 +48,8 @@ pristine Pi snapshot is `~/hevort_project_pi_20260919.tar.gz` (99MB, sha256
 `CLAUDE.md` and `project_notes.txt` as they were *before* the rewrite for
 workstation use.
 
-For the record: `~/hevort_project` on the Pi was never pushed to Drive.
-`watch_and_push.sh` and `push_to_drive.sh` only ever synced `/opt/dsf/sd/sys`
-and `/opt/dsf/sd/macros`, which are untouched and still syncing.
+Both halves are now backed up to git — see **Backup** below. Google Drive is no
+longer part of this setup.
 
 Slicing happens **entirely on the workstation** — the Pi has no slicer, no
 presets and no source. See `slicer_notes.md`.
@@ -60,9 +59,9 @@ gone and nothing cites it any more — `project_notes.txt` and `is.txt` both
 point at `~/hevort_project/survey_data/`. Write new survey data here.
 
 `gcodes.txt` moved out of `/opt/dsf/sd/sys/` into this directory on 29/08/2026 and
-is deliberately NOT kept on Drive — it is a local convenience copy of documentation
-that is public on the Duet3D site. It is outside the watched directories, so nothing
-uploads it. Do not "restore" it to `sys/`.
+is deliberately NOT committed — it is a local convenience copy of documentation
+that is public on the Duet3D site, so `.gitignore` excludes it rather than
+republishing someone else's docs. Do not "restore" it to `sys/`.
 
 Last refreshed 15/09/2026. To refresh it, back up the old copy and run:
 
@@ -158,19 +157,82 @@ by hand before the next reset.
 Those files are on the Pi, so the local file tools cannot reach them. Read with
 `ssh hevort.local 'cat /opt/dsf/sd/sys/<f>'`; back up on the Pi
 (`cp <f> <f>.bak`) before any write, and write there too. Do not pull a machine
-file here, edit it, and push it back — `watch_and_push.sh` is watching the Pi's
-copy and you will race it.
+file here, edit it, and push it back — the Pi is the only copy of the machine
+config, and `hevort-config-watch` is watching it.
 
-`/opt/dsf/sd/sys` and `/opt/dsf/sd/macros` are watched by `~/watch_and_push.sh`
-**on the Pi** (running as `hevort-drive-sync.service`, confirmed active
-19/09/2026), which `rclone`s every change to **Google Drive**. Claude Web reads that Drive as
-the live source of truth, and `rclone copy` never deletes on the remote. Run
-`ssh hevort.local ./cleanup_drive.sh` (dry run by default) to prune orphans.
+`/opt/dsf/sd/sys` and `/opt/dsf/sd/macros` are committed to git on every change
+by `hevort-config-watch` on the Pi — see **Backup** below. The machine itself is
+authoritative; git is the history of it, not a second copy to edit.
 
 - Machine files and documents → `/opt/dsf/sd/sys/`, edited in place.
 - Scratch, throwaway backups → your scratchpad. Never `sys/`.
-- Don't leave multiple versions of a document in `sys/` — supersede in place. A
-  future session reading Drive cannot tell which is current.
+- Don't leave multiple versions of a document in `sys/` — supersede in place.
+  Git carries the history; parallel copies in the tree just create ambiguity.
+
+## Backup
+
+Two git repositories, one writer each, both public. Nothing is on Google Drive
+any more and nothing runs on a timer.
+
+| Repo | Holds | Written by | Watcher |
+|---|---|---|---|
+| [`m0oml/hevort_project`](https://github.com/m0oml/hevort_project) | this directory | workstation | `hevort-project-watch` |
+| [`m0oml/hevort_config`](https://github.com/m0oml/hevort_config) | `/opt/dsf/sd/{sys,macros}` | Pi | `hevort-config-watch` |
+
+**One writer per repo is deliberate.** Two unattended watchers pushing to one
+branch would race on every push — git rejects a stale HEAD regardless of which
+paths changed — and an auto-retry that mishandles it loses a change silently.
+
+`hevort_config`'s working tree **is** `/opt/dsf/sd`. Editing a file there and
+letting the watcher commit it is the whole workflow; there is nothing to sync.
+
+### Checking on them
+
+```bash
+systemctl status hevort-project-watch          # workstation
+cat ~/hevort_project_watch.status              # last outcome, one line
+ssh hevort.local 'systemctl status hevort-config-watch'
+ssh hevort.local 'cat ~/hevort_config_watch.status'
+```
+
+Commits are labelled by change type: `+added`, `~modified`, `-deleted`.
+
+### What they guarantee, and what they don't
+
+- **Commit on change, not on a timer.** The duetBackup plugin this replaced
+  committed every 6 hours, so anything changed twice inside a window only ever
+  reached GitHub in its final state. Intermediate states are now preserved.
+- **Reconcile on start.** The gap an on-change watcher leaves is its own
+  downtime. Each one commits anything outstanding *before* it begins watching,
+  so a reboot or crash is not a silent hole.
+- **Drain after commit.** inotify only delivers events while a watch is active,
+  and there is no watch during the commit and push. Changes landing in that
+  window were being lost outright — caught in testing 19/09/2026. Each watcher
+  now re-checks the tree after committing instead of assuming it saw everything.
+- **A blocked commit is loud.** A `pre-commit` hook in both repos refuses any
+  commit containing a token, private key or AWS key. On the Pi a block also puts
+  `GIT BLOCKED` on the printer's display, because that failure otherwise looks
+  like nothing is wrong.
+- **They do not gate anything.** A bad `config.g` is committed within seconds.
+  These are a record, not a review step.
+
+### Not committed
+
+`hevort_config` excludes `sys/heightmap.csv` (the working copy RRF recalls from
+the named `heightmap_bed*_ch*.csv` maps) and the capture directories RRF creates
+on demand, `sys/accelerometer/` and `sys/closed-loop/` — those are output, not
+config. Captures are renamed and copied across into `survey_data/` here, where
+the project watcher picks them up.
+
+`hevort_project` excludes `preFlight/` (161M upstream checkout, `f74dc69`),
+`gcodes.txt` and `print_tuning_guide.txt` (third-party docs, linked in the
+README rather than mirrored).
+
+### Keys
+
+Each machine has its own GitHub SSH key — `~/.ssh/id_ed25519_github`, separate
+from the LAN key. Either can be revoked without affecting the other. They have
+no passphrase, which is what lets the watchers run unattended.
 
 ## Traps that have cost hours
 

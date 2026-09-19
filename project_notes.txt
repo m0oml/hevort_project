@@ -20,16 +20,20 @@ MOVED 19/09/2026: this project now lives on the WORKSTATION, pulled from the
 Pi. The machine is driven over SSH as hevort.local - see CLAUDE.md for the
 tested command forms. Paths below that say "on the Pi" mean literally that:
 reach them with ssh, not with a local file read. The Pi's own copy of
-~/hevort_project is still there and still syncing to Drive; this copy is a
-snapshot and the two will drift.
+~/hevort_project was archived and DELETED on 19/09/2026 after a checksum-
+verified transfer, so this is now the only working copy. It is backed up to
+github.com/m0oml/hevort_project by the hevort-project-watch service.
 
 SESSION BOOTSTRAP  
 1. Read this file - ~/hevort_project/project_notes.txt. It is no longer on
    Drive; a Claude Web session will NOT see it unless that changes.
-2. config.g and macros in /opt/dsf/sd/sys/ and /opt/dsf/sd/macros/ ARE still
-   watched and pushed to Drive - config.g on Drive is AUTHORITATIVE for
-   firmware settings. Those paths are ON THE PI. This file is secondary and
-   lags verbal session decisions - cross-check, don't assume.
+2. config.g and macros in /opt/dsf/sd/sys/ and /opt/dsf/sd/macros/ are ON THE
+   PI and are committed to git on every change by hevort-config-watch
+   (github.com/m0oml/hevort_config). THE MACHINE ITSELF IS AUTHORITATIVE for
+   firmware settings - read config.g over ssh, not a copy. Google Drive is no
+   longer part of this setup; anything still on Drive is a frozen snapshot from
+   19/09/2026 and must not be trusted. This file is secondary and lags verbal
+   session decisions - cross-check, don't assume.
 3. Check gcodes.txt before issuing any GCode command. It lives at
    ~/hevort_project/gcodes.txt - now on the workstation, alongside this file.
 4. Ellis' Print Tuning Guide is at ~/hevort_project/print_tuning_guide.txt,
