@@ -216,6 +216,18 @@ Commits are labelled by change type: `+added`, `~modified`, `-deleted`.
 - **They do not gate anything.** A bad `config.g` is committed within seconds.
   These are a record, not a review step.
 
+### Pausing to batch edits
+
+```bash
+echo "why" > BACKUP_PAUSED        # workstation, in the repo root
+echo "why" > sys/BACKUP_PAUSED    # Pi
+rm BACKUP_PAUSED                  # release — everything held lands as ONE commit,
+                                   # titled with the reason you gave
+```
+
+Auto-expires after 10 minutes if forgotten — see `services/README.md` for the
+full mechanism and why the expiry exists.
+
 ### Not committed
 
 `hevort_config` excludes `sys/heightmap.csv` (the working copy RRF recalls from
