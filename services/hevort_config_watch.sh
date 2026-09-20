@@ -17,8 +17,18 @@ set -u
 REPO=/opt/dsf/sd
 STATUS=/home/trev/hevort_config_watch.status
 DEBOUNCE=5          # seconds of quiet before committing
+LOCK="/opt/dsf/sd/sys/BACKUP_PAUSED"
+LOCK_MAX_AGE=600    # 10 min. The lock is for batching a few edits, not for
+                    # holding a whole session, so a forgotten one should clear
+                    # itself quickly. A silently paused backup is the same
+                    # failure reconcile() and drain() exist to prevent.
+POLL=60             # wake this often even with no file activity, so a released
+                    # or expired lock is noticed without needing a file to change
+
 PUSH_RETRIES=5      # network outages are obvious from the printer being dead,
 PUSH_BACKOFF=30     # so retry quietly and let the log carry the detail
+
+BATCH_SUBJECT=""
 
 log() { printf '[%s] %s\n' "$(date '+%F %T')" "$*"; }
 status() { printf '%s | %s\n' "$(date '+%F %T')" "$*" > "$STATUS"; }
@@ -57,6 +67,13 @@ commit_and_push() {
     subject="$reason: $files"
     [ "$count" -gt 6 ] && subject="$reason: $count files"
 
+    # A batch released from the lock gets the lock's own text as its subject:
+    # deliberate work deserves a real message, not a list of filenames.
+    if [ -n "${BATCH_SUBJECT:-}" ]; then
+        subject="$BATCH_SUBJECT"
+        BATCH_SUBJECT=""
+    fi
+
     if ! git commit -q -m "$subject" 2>&1 | tee /tmp/hcw_commit.err >&2; then
         if grep -qi "credential\|COMMIT ABORTED" /tmp/hcw_commit.err 2>/dev/null; then
             log "BLOCKED: pre-commit secret scan refused this commit"
@@ -91,6 +108,34 @@ commit_and_push() {
     return 1
 }
 
+# Is committing paused?
+#
+#   echo "retune extruder limits" > LOCK   pause, and set the commit subject
+#   touch LOCK                             pause, auto subject as usual
+#   rm LOCK                                resume; everything lands as ONE commit
+#
+# Returns 0 while genuinely paused. A lock past LOCK_MAX_AGE is treated as
+# forgotten and cleared loudly, because "backups stopped and everything looks
+# fine" is the worst state this system can be in.
+locked() {
+    [ -e "$LOCK" ] || return 1
+    local age
+    age=$(( $(date +%s) - $(stat -c %Y "$LOCK" 2>/dev/null || echo 0) ))
+    if [ "$age" -gt "$LOCK_MAX_AGE" ]; then
+        log "WARNING: lock held ${age}s (limit ${LOCK_MAX_AGE}s) — treating as forgotten, resuming"
+        notify_machine "BACKUP LOCK EXPIRED - resuming"
+        rm -f "$LOCK"
+        return 1
+    fi
+    return 0
+}
+
+# Human-readable age of the held lock, for the status line.
+lock_age() {
+    local age; age=$(( $(date +%s) - $(stat -c %Y "$LOCK" 2>/dev/null || echo 0) ))
+    printf '%dm%02ds' "$((age / 60))" "$((age % 60))"
+}
+
 # Commit repeatedly until the tree is actually clean.
 #
 # inotify only delivers events while a watch is active. Between the debounce
@@ -104,6 +149,19 @@ commit_and_push() {
 # forever and would spin.
 drain() {
     local reason="$1" attempt
+
+    # Checked here rather than at the call sites so that reconcile-on-start
+    # honours it too — otherwise a restart or reboot would commit everything
+    # the lock was holding back, and the lock would silently mean nothing.
+    if locked; then
+        local why; why=$(head -c 120 "$LOCK" 2>/dev/null | tr -d '\n')
+        # Remembered now because `rm` destroys it, and the batch it describes is
+        # committed after the lock is already gone.
+        [ -n "$why" ] && BATCH_SUBJECT="$why"
+        log "paused by $LOCK ($(lock_age))${why:+ — $why}"
+        status "PAUSED ($(lock_age))${why:+ — $why}"
+        return 0
+    fi
     for attempt in 1 2 3; do
         commit_and_push "$reason" || return 1
         [ -z "$(git status --porcelain)" ] && return 0
@@ -131,8 +189,22 @@ status "OK — watching"
 
 while true; do
     event=$(inotifywait -q -r -e close_write,moved_to,move_self,create,delete \
-                --format '%e %w%f' "$REPO/sys" "$REPO/macros" 2>/dev/null)
+                -t "$POLL" --format '%e %w%f' "$REPO/sys" "$REPO/macros" 2>/dev/null)
     rc=$?
+
+    # rc 2 is the poll timeout, not a fault. Use it to notice a lock that has
+    # been released or has expired: removing the lock changes no watched file,
+    # so without this the batch would sit uncommitted until something else moved.
+    if [ "$rc" -eq 2 ]; then
+        if ! locked && [ -n "$(git status --porcelain)" ]; then
+            log "outstanding changes and no lock — committing"
+            drain "batch" || true
+        elif ! locked; then
+            status "OK — watching"
+        fi
+        continue
+    fi
+
     if [ "$rc" -ne 0 ]; then
         log "inotifywait exited rc=$rc; restarting watch in 5s"
         sleep 5
