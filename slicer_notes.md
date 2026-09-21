@@ -103,8 +103,16 @@ where the two disagree.
 > Order of work is PA, then flow (EM), then retraction — per Ellis' own stated
 > prerequisites (`extrusion_multiplier.html`: "you should tune pressure advance
 > first"), not the reverse as this file previously said. PA affects how the EM
-> test cubes' walls look, so it has to be settled first. Extrusion multiplier
-> (0.98) and retraction are still starting points, pending those tests.
+> test cubes' walls look, so it has to be settled first.
+>
+> Extrusion multiplier: **0.97**, found 21/09/2026 via Orca's built-in Flow Rate
+> calibration plate (11 objects, ±0.05 around the old 0.98 guess) — supersedes
+> the coupled-tuning guess, same as PA. Set in both the Orca and preFlight ABS
+> filament profiles. Unlike PA, this one is flagged PENDING a confirmation
+> print in preFlight itself before being trusted fully — Ellis notes different
+> slicers can compute flow differently, so a value measured in Orca isn't
+> guaranteed to be exactly right in preFlight. Retraction is still a starting
+> point, the remaining item.
 
 ## Extruder limits are coupled to pressure advance
 
