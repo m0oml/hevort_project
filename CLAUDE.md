@@ -79,7 +79,7 @@ down **one** DCS connection.
 nesting them through an SSH argument is where this goes wrong:
 
 ```bash
-ssh hevort.local duet <<'EOF'
+ssh hevort duet <<'EOF'
 M114
 M409 K"state.status"
 EOF
@@ -91,16 +91,16 @@ Verified working 19/09/2026 — returns one JSON line per query.
 The argument form works too but every inner quote needs escaping:
 
 ```bash
-ssh hevort.local 'duet "M114" "M409 K\"state.status\""'
-ssh hevort.local 'duet -q "G1 Z20 F600"'     # -q discards replies
+ssh hevort 'duet "M114" "M409 K\"state.status\""'
+ssh hevort 'duet -q "G1 Z20 F600"'     # -q discards replies
 ```
 
 Reading machine files, the DCS journal and `sudo` all work unprompted:
 
 ```bash
-ssh hevort.local 'cat /opt/dsf/sd/sys/config.g'
-ssh hevort.local 'journalctl -u duetcontrolserver -n 50 --no-pager'
-ssh hevort.local 'sudo systemctl restart duetcontrolserver'
+ssh hevort 'cat /opt/dsf/sd/sys/config.g'
+ssh hevort 'journalctl -u duetcontrolserver -n 50 --no-pager'
+ssh hevort 'sudo systemctl restart duetcontrolserver'
 ```
 
 **One SSH invocation per batch, not per code.** The batching rule below is about
@@ -129,7 +129,7 @@ Only then the next. Four boards is four separate, verified operations.
 returns "The operation was canceled" roughly 90s early. Do not archive
 `heightmap.csv` on that return — you will copy the PREVIOUS map. Wait for the
 `[MESH] saved` line in the DCS journal:
-`ssh hevort.local 'journalctl -u duetcontrolserver -n 200 --no-pager | grep MESH'`
+`ssh hevort 'journalctl -u duetcontrolserver -n 200 --no-pager | grep MESH'`
 
 ## Resets
 
@@ -137,9 +137,9 @@ returns "The operation was canceled" roughly 90s early. Do not archive
 - **`sudo reboot` restarts only the Pi.** The 6HC has its own power and does *not*
   reset, so `config.g` does not re-run. Over SSH this now only drops the
   connection — your session and notes survive. Wait for the Pi to come back
-  (`ssh hevort.local true` until it succeeds) rather than assuming.
+  (`ssh hevort true` until it succeeds) rather than assuming.
 - DSF config (`/opt/dsf/conf/config.json`) needs
-  `ssh hevort.local 'sudo systemctl restart duetcontrolserver'`, not `M999`. That
+  `ssh hevort 'sudo systemctl restart duetcontrolserver'`, not `M999`. That
   also reloads `daemon.g` without resetting the board — lighter than `M999` when
   you only need a macro reloaded.
 - `UsbDevice` must stay the `/dev/serial/by-id/` path. The node moves between
@@ -155,7 +155,7 @@ consequence: an autotune result (`M307`) lives in RAM only and must be transcrib
 by hand before the next reset.
 
 Those files are on the Pi, so the local file tools cannot reach them. Read with
-`ssh hevort.local 'cat /opt/dsf/sd/sys/<f>'`; back up on the Pi
+`ssh hevort 'cat /opt/dsf/sd/sys/<f>'`; back up on the Pi
 (`cp <f> <f>.bak`) before any write, and write there too. Do not pull a machine
 file here, edit it, and push it back — the Pi is the only copy of the machine
 config, and `hevort-config-watch` is watching it.
@@ -191,8 +191,8 @@ letting the watcher commit it is the whole workflow; there is nothing to sync.
 ```bash
 systemctl status hevort-project-watch          # workstation
 cat ~/hevort_project_watch.status              # last outcome, one line
-ssh hevort.local 'systemctl status hevort-config-watch'
-ssh hevort.local 'cat ~/hevort_config_watch.status'
+ssh hevort 'systemctl status hevort-config-watch'
+ssh hevort 'cat ~/hevort_config_watch.status'
 ```
 
 Commits are labelled by change type: `+added`, `~modified`, `-deleted`.
@@ -256,7 +256,7 @@ no passphrase, which is what lets the watchers run unattended.
   command** — you will double-issue it. Reconnect and read the state back
   (`M409 K"state.status"`, the DCS journal) before doing anything else.
   For anything long, prefer launching detached and polling:
-  `ssh hevort.local 'setsid nohup <cmd> >/tmp/x.log 2>&1 </dev/null &'`
+  `ssh hevort 'setsid nohup <cmd> >/tmp/x.log 2>&1 </dev/null &'`
   (verified to survive the disconnect), then read `/tmp/x.log`.
 - **`M558` silently wipes the `G31` trigger height.** Re-issue `G31` immediately
   after any `M558`, in that order. Verify `triggerHeight` is `-0.134`.
