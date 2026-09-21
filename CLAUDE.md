@@ -5,9 +5,11 @@ Duet 3 6HC in **SBC/DSF mode** on a Raspberry Pi 4. RRF + DSF 3.7.0-rc.1
 
 **You are running on the workstation, not on the Pi** (changed 19/09/2026 — this
 file was written for a session that ran on the Pi itself). You reach the machine
-over SSH as `hevort.local` (192.168.32.70, key-based, user `trev`, passwordless
+over SSH via the `hevort` alias (192.168.32.70, key-based, user `trev`, passwordless
 `sudo`). Rebooting the Pi no longer kills your shell — it kills the SSH
-connection, and your working copy and notes survive.
+connection, and your working copy and notes survive. `ssh hevort.local` stopped
+authenticating at some point — use `hevort`, resolved via `~/.ssh/config`
+(`IdentityFile ~/.ssh/id_ed25519_garagepc`). Confirmed working 21/09/2026.
 
 ## Where things are
 
@@ -31,7 +33,7 @@ Two machines now. Keep them straight.
 ~/.config/preFlight/ LIVE slicer presets — see slicer_notes.md
 ```
 
-**Pi (`hevort.local`) —** the machine's own files. Absolute paths, over SSH:
+**Pi (`hevort` alias, 192.168.32.70) —** the machine's own files. Absolute paths, over SSH:
 
 ```
 /opt/dsf/sd/sys/     config.g, bed.g, mesh.g, home*.g, probe macros
