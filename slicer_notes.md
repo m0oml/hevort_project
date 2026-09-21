@@ -94,8 +94,17 @@ where the two disagree.
 > margin). Trev prints at **105°C**. The earlier "keep to ~110" was the print
 > temperature mistaken for a ceiling — it is not one.
 
-> Extrusion values are still starting points — the extruder has never printed.
-> Flow, then pressure advance, then retraction are the remaining order of work.
+> Pressure advance is MEASURED, not a starting point: **0.02**, found 21/09/2026
+> via Ellis' pattern method, run in Orca (see `print_tuning_guide.txt` line
+> 1023). Supersedes the earlier 0.03 coupled-tuning guess — that number was
+> never actually measured on a print. Set live on the machine and in both the
+> preFlight and Orca ABS filament profiles the same day.
+>
+> Order of work is PA, then flow (EM), then retraction — per Ellis' own stated
+> prerequisites (`extrusion_multiplier.html`: "you should tune pressure advance
+> first"), not the reverse as this file previously said. PA affects how the EM
+> test cubes' walls look, so it has to be settled first. Extrusion multiplier
+> (0.98) and retraction are still starting points, pending those tests.
 
 ## Extruder limits are coupled to pressure advance
 
@@ -107,7 +116,9 @@ correction as an instantaneous velocity step of `M572 S × M201 E`, so per
 max M201 E = (M566 E in mm/s) / (M572 S in seconds)
 ```
 
-Settled set at PA 0.03 (19/09/2026):
+Set at PA 0.03 (19/09/2026), still valid unchanged now PA is measured at 0.02
+(21/09/2026) — the constraint only got looser (`60 mm/s ÷ 0.02s = 3000` max
+`M201 E`, vs the `2000` actually in use), so nothing here needed to move:
 `M201 E2000` / `M566 E3600` (60 mm/s) / `M203 E6000` (100 mm/s — ~18 mm/s
 steady at 44 mm³/s, plus the 60 mm/s PA step, plus margin).
 
