@@ -27,3 +27,6 @@ preFlight/
 #   rm BACKUP_PAUSED                resume; everything lands as ONE commit
 # Auto-expires after 10 min if forgotten — see hevort_project_watch.sh.
 /BACKUP_PAUSED
+
+# ── Claude Code local settings ──
+/.claude/
