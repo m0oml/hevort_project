@@ -296,8 +296,8 @@ no passphrase, which is what lets the watchers run unattended.
   G31 re-measured cold by slip gauge 17/09/2026: Z-0.050 (was -0.030). Same
   at 150C hotend. Superseded 18/09/2026 by printed squish sweeps: Z-0.134. Then 24/09/2026:
   two-pass heighttest (M290 babystep per object) still too close, best object
-  +0.13 -> Z-0.264 in config.g:77 AND mesh.g:58. Not yet confirmed live on the
-  machine — `M999` or `G31 P500 X0 Y0 Z-0.264` first, then read it back.
+  +0.13 -> Z-0.264 in config.g:77 AND mesh.g:58. Confirmed live after M999,
+  triggerHeight read back -0.264 (24/09/2026).
   The slip gauge reads the GAP; the gauge triggers on FORCE, after the nozzle
   has loaded the bed — so it measures high. Trust the printed first layer.
   The first sweep gave -0.170, but that was run against `heightmap_bed100_ch60.csv`
