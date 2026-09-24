@@ -287,7 +287,7 @@ One line each. Detail in project-long.txt under the named section.
   condition (chamber first, then bed). printstart.g branches on it. See
   THERMAL MAP SET below. [PRINT CALIBRATION]
 - SQUISH, FLOW AND PA CALIBRATED 18-19/09/2026 for ABS, in Ellis Print Tuning
-  Guide order: G31 Z-0.134, EM 0.98, PA 0.03. All by printed test, not by
+  Guide order: G31 Z-0.264 (24/09), EM 0.97 (21/09), PA 0.02 (21/09). All by printed test, not by
   slip gauge or by eye. See PRINT CALIBRATION below. [PRINT CALIBRATION]
 - EXTRUDER MOTION LIMITS raised and made self-consistent 19/09/2026: M201
   E2000, M203 E6000, M566 E3600, tied together by the PA formula. See
@@ -578,8 +578,10 @@ IO4 are free, with IO3 reserved for a runout sensor.
 ---------------------------------------------------------------------------  
 - Continuity testing of the umbilical.  
 - ALPS probe: the P5-vs-P9 question is RESOLVED - config.g line 76 is P9. The  
-  trigger height is set and derived, G31 Z-0.134 (config.g line 77) - SET
-  19/09/2026 by printed squish sweep, superseding the 17/09 slip-gauge value.
+  trigger height is set and derived, G31 Z-0.264 (config.g line 77, and
+  mesh.g line 58) - SET 24/09/2026 by a two-pass printed heighttest (per-object
+  M290 babystep, best object +0.13 over the old -0.134), superseding 19/09's
+  -0.134 and the 17/09 slip-gauge value.
   See PRINT CALIBRATION above; the gauge measures the GAP, the probe triggers
   on FORCE, so the slip-gauge number was always going to read high. The XY
   offsets are X0 Y0 and that is CORRECT, not a placeholder - the ALPS is a  
@@ -853,7 +855,8 @@ line-numbered contents at the top, photographs NOT included - it is a lynx dump)
 Ellis' order is extruder -> squish -> PA -> EM. Retraction last, and he says the
 tower method is usually unnecessary: direct drive starts 0.5mm @ 35mm/s, stay
 under 1mm. We are at 0.5 @ 40/30.
-- G31 Z-0.134, set by PRINTED SQUISH SWEEPS, not by slip gauge. The gauge reads
+- G31 Z-0.134 (now -0.264, 24/09/2026 - see SQUISH note above), set by PRINTED
+  SQUISH SWEEPS, not by slip gauge. The gauge reads
   the GAP; the probe triggers on FORCE after the nozzle has loaded the bed, so
   it measures high - 17/09's slip-gauge -0.050 was 84um out.
 - METHOD: five first-layer patches, one print, a different ABSOLUTE babystep per

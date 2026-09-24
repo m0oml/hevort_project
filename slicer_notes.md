@@ -167,3 +167,16 @@ The preFlight presets were also converted to Orca 2.4.2, living in
   it as "process not compatible with printer".
 - Orca has no `autoemit_temperature_commands`, so the `M140 S0` / `M104 S0`
   suppression in the start block is what keeps `printstart.g` owning all heating.
+
+## Part cooling — ABS and ASA (24/09/2026)
+
+The CPAP (fan 1, `X1`, no firmware cap) was over-cooling ABS/ASA: the profiles
+ran 10–100% and ramped to full when a layer took under 30 s, which every small
+calibration part does. Ellis (`cooling_and_layer_times.html`) wants ABS cooled
+in a hot chamber but at a **constant** speed — his 40–80% figures are for a
+5015 blower, and a CPAP moves far more air.
+
+Set in preFlight and Orca, ABS and ASA only: fan **30% constant** (min = max),
+bridges/overhangs **50%**, first 3 layers off (unchanged), minimum layer time
+**15 s** (was 3). STARTING POINTS, not measured — adjust in 10% steps by
+layer adhesion, cracking and warp. Other materials untouched.

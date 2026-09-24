@@ -261,7 +261,7 @@ no passphrase, which is what lets the watchers run unattended.
   `ssh hevort 'setsid nohup <cmd> >/tmp/x.log 2>&1 </dev/null &'`
   (verified to survive the disconnect), then read `/tmp/x.log`.
 - **`M558` silently wipes the `G31` trigger height.** Re-issue `G31` immediately
-  after any `M558`, in that order. Verify `triggerHeight` is `-0.134`.
+  after any `M558`, in that order. Verify `triggerHeight` is `-0.264` (was -0.134 until 24/09/2026 — see below).
 - `G30 S-1` reports the **raw** trigger height; `G29` stores it with `G31 Z`
   already subtracted. Comparing them looks like a 0.7mm fault and isn't.
 - RRF heightmap **row 0 = Ymin = FRONT**. Positive = bed high = gantry sits low.
@@ -294,7 +294,10 @@ no passphrase, which is what lets the watchers run unattended.
   harmonic on 125Hz. Fix 17/09/2026: probe speed `F450:450` (7.5mm/s) in config.g
   and mesh.g, plus ALPS `SAMPLE_THRESHOLD` 72000. Do not go back to 5 or 10mm/s.
   G31 re-measured cold by slip gauge 17/09/2026: Z-0.050 (was -0.030). Same
-  at 150C hotend. Superseded 18/09/2026 by printed squish sweeps: Z-0.134.
+  at 150C hotend. Superseded 18/09/2026 by printed squish sweeps: Z-0.134. Then 24/09/2026:
+  two-pass heighttest (M290 babystep per object) still too close, best object
+  +0.13 -> Z-0.264 in config.g:77 AND mesh.g:58. Not yet confirmed live on the
+  machine — `M999` or `G31 P500 X0 Y0 Z-0.264` first, then read it back.
   The slip gauge reads the GAP; the gauge triggers on FORCE, after the nozzle
   has loaded the bed — so it measures high. Trust the printed first layer.
   The first sweep gave -0.170, but that was run against `heightmap_bed100_ch60.csv`
