@@ -262,7 +262,8 @@ no passphrase, which is what lets the watchers run unattended.
   (verified to survive the disconnect), then read `/tmp/x.log`.
 - **`printstart.g` meshes the bed itself per print** (25/09/2026): with a
   footprint it probes footprint+10mm, `round(span/55)+1` points per axis (2..7),
-  then re-datums at centre; no footprint falls back to the named maps. On this
+  then re-datums at centre; no footprint meshes the whole bed (7x7). The named
+  `heightmap_*.csv` files are no longer loaded by anything. On this
   firmware (3.7.0-rc.1) multi-value params need the comma form — `M557
   X{a, b}`, NOT `X{a}:{b}` (that is the RRF 3.4 form and errors).
 - **`M558` silently wipes the `G31` trigger height.** Re-issue `G31` immediately

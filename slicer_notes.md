@@ -185,8 +185,9 @@ layer adhesion, cracking and warp. Other materials untouched.
 
 `printstart.g` meshes the bed itself when the slicer sends a first-layer
 footprint (`L/F/W/D`, which both slicers already pass), over just the part's
-area at the temperature the print runs at — see `project_notes.txt`. Named
-heightmaps are only the fallback for a hand-sent `M98` with no footprint.
+area at the temperature the print runs at — see `project_notes.txt`. A hand-sent
+`M98` with no footprint meshes the whole bed; nothing loads the named heightmaps
+any more.
 
 The Orca machine profile briefly bypassed `printstart.g` (and the map) on
 25/09/2026 for a no-map test; **reverted the same day** to the standard one-line
