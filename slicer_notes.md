@@ -180,3 +180,27 @@ Set in preFlight and Orca, ABS and ASA only: fan **30% constant** (min = max),
 bridges/overhangs **50%**, first 3 layers off (unchanged), minimum layer time
 **15 s** (was 3). STARTING POINTS, not measured — adjust in 10% steps by
 layer adhesion, cracking and warp. Other materials untouched.
+
+## TEMPORARY — Orca start block bypasses printstart.g and the heightmap (25/09/2026)
+
+For isolating the first-layer height problem: `HevORT 0.6.json` (Orca machine
+profile) no longer calls `0:/sys/printstart.g`. It carries an inline copy of
+printstart.g in the same order — chamber, bed, probe-temp standby, `G32`,
+purge — but **no `G29 S1` map load**, and an explicit `G29 S2` so a mesh left
+loaded by an earlier print cannot still apply. Every exported G-code starts
+with `; ===== TEMP TEST START`. The bed is uncompensated, so first-layer height
+will vary across the plate by whatever the map would have corrected.
+
+**This applies to every Orca print until reverted.** preFlight is unaffected.
+To revert, replace `machine_start_gcode` with the original:
+
+```
+; ===== HevORT start - all logic is in sys/printstart.g =====
+M140 S0 ; suppresses OrcaSlicer's auto-inserted bed heat - printstart.g owns it
+M104 S0 ; suppresses OrcaSlicer's auto-inserted nozzle heat - printstart.g owns it
+M98 P"0:/sys/printstart.g" B{bed_temperature_initial_layer_single} C{min(chamber_temperature[0], 75)} T{nozzle_temperature_initial_layer[0]} L{first_layer_print_min[0]} F{first_layer_print_min[1]} W{first_layer_print_size[0]} D{first_layer_print_size[1]}
+; ===== end of start block =====
+```
+
+Orca's `{ }` placeholder syntax collides with RRF meta-command expressions, so
+an inline copy must use Orca's own `{if}`/`{local}` — never RRF `var`/`{expr}`.
