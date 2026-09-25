@@ -881,6 +881,34 @@ under 1mm. We are at 0.5 @ 40/30.
   Its start-G-code box inserts G28/M190/M109 before whatever you type; delete
   them or the nozzle is at print temp, oozing, during G32.
 
+ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
+- WHY: the 19/09 ABS map (bed105_ch60, 7x7) is a bowl - left/right edges 0.2-0.3mm
+  below centre, range 0.40mm. Over any 50mm window it varies median 80um / p90
+  136um; over 75mm median 118um. A single datum (or no mesh) leaves that in the
+  first layer, and a stored map carries whatever thermal state it was taken in.
+  The G31 drift -0.134 -> -0.264 in five days looked like that mismatch, not a
+  mechanical change.
+- RULE: grid = footprint (L/F/W/D from the slicer) + 10mm margin, clamped to
+  X10:390 Y16:384 (mesh.g's proven reach); points per axis = round(span/55)+1,
+  clamped 2..7 (2x2 floor; full bed = the old 7x7). Then M561-clean, M558 restate,
+  G31 from global.trigZ, G29 S0, re-datum at centre (G1 X200 Y200, G30), as mesh.g.
+  No footprint (hand-sent M98) -> named map fallback, unchanged.
+- SYNTAX TRAP: RRF 3.6+ wants the whole parameter as one array expression, so
+  M557 X{var.x0, var.x1} Y{...} P{var.nx, var.ny}. The RRF 3.4 form X{a}:{b}
+  errors "Wrong number of values in array, expected 2" on 3.7.0-rc.1 (tested).
+- global.trigZ (config.g, guarded with `if !exists`) is the single source for
+  the trigger height: config.g G31, mesh.g G31, printstart.g G31. Was two literals.
+- TESTED live 25/09/2026, cold nozzle and bed, heighttest footprint (L132.5 F147
+  W135 D106): 4x3 = 12 points over X122.5:277.5 Y137:263, mean -0.002, deviation
+  0.025mm (range -0.056..+0.033), centre re-datum OK, triggerHeight stayed -0.264,
+  babystep 0. COLD: not comparable to the hot map. NOT yet run inside a real hot
+  print - first real print should be watched for the "[START] adaptive mesh" line.
+- M290 CHECK 25/09/2026: R0 = absolute, positive raises the head. M290 R0 S0.10 at
+  Z20 moved machinePosition 20.000 -> 20.100 with userPosition unchanged, cleared
+  back to 20.000. The heighttest sweep offsets DO physically move the nozzle.
+- Backups on the Pi before the change: ~/printstart.g.bak-20260925-pre-adaptive,
+  ~/mesh.g.bak-20260925-pre-adaptive, ~/config.g.bak-20260925-pre-adaptive.
+
 THERMAL MAP SET, 18-19/09/2026 - FIVE MAPS, ONE PER PRINTING CONDITION
 The bed's shape is driven by the CHAMBER far more than by bed temperature, so
 maps are per (bed, chamber) pair, not per bed temperature. Every pair below is
