@@ -933,6 +933,15 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   lies inside the mesh margin, so the mesh compensates it. Expression tested with no
   motion (L185 -> 185, L5 -> 10, L380 -> 340, none -> 10); the full purge move has
   NOT yet run - watch the first print. Backup ~/printstart.g.bak-20260926-pre-purgex.
+- UPGRADED 26/09/2026 to DSF + RRF 3.7.0-rc.2 (apt upgrade; the firmware prompt did the
+  four M23CLs one by one, then the MB6HC). Verified after: all 5 boards 3.7.0-rc.2,
+  services active, no startup error, global.trigZ and triggerHeight -0.174 recreated by
+  config.g on the real reset, UsbDevice by-id path intact (config.json kept; new default
+  saved as /opt/dsf/conf/config.json.dpkg-dist). 'Expansion board 70/71/72 stopped sending
+  status' errors 19:59-20:02 were the flash window only. rc.2 breaking changes checked:
+  all M956 already pass P0, nothing reads boards[].accelerometer, no M23CL board-temp
+  M308. NOT yet applied: anchored NumLayersFilters + new ObjectHeightFilters from
+  config.json.dpkg-dist (layer-count fix for preFlight files).
 - M290 CHECK 25/09/2026: R0 = absolute, positive raises the head. M290 R0 S0.10 at
   Z20 moved machinePosition 20.000 -> 20.100 with userPosition unchanged, cleared
   back to 20.000. The heighttest sweep offsets DO physically move the nozzle.

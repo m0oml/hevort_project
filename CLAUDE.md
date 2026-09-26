@@ -1,7 +1,7 @@
 # HevORT — how to drive this machine
 
-Duet 3 6HC in **SBC/DSF mode** on a Raspberry Pi 4. RRF + DSF 3.7.0-rc.1
-(upgraded 08/09/2026 from beta.3), **SBC over USB** since 27/08/2026 (was SPI).
+Duet 3 6HC in **SBC/DSF mode** on a Raspberry Pi 4. RRF + DSF **3.7.0-rc.2**
+(upgraded 26/09/2026 from rc.1, apt + firmware prompt; 08/09/2026 from beta.3), **SBC over USB** since 27/08/2026 (was SPI).
 
 **You are running on the workstation, not on the Pi** (changed 19/09/2026 — this
 file was written for a session that ran on the Pi itself). You reach the machine
@@ -264,8 +264,8 @@ no passphrase, which is what lets the watchers run unattended.
 - **`printstart.g` meshes the bed itself per print** (25/09/2026): with a
   footprint it probes footprint+10mm, `round(span/55)+1` points per axis (2..7),
   then re-datums at centre; no footprint meshes the whole bed (7x7). The named
-  `heightmap_*.csv` files are no longer loaded by anything. On this
-  firmware (3.7.0-rc.1) multi-value params need the comma form — `M557
+  `heightmap_*.csv` files are no longer loaded by anything. On RRF 3.6+
+  (tested on 3.7.0-rc.1) multi-value params need the comma form — `M557
   X{a, b}`, NOT `X{a}:{b}` (that is the RRF 3.4 form and errors).
 - **`M558` silently wipes the `G31` trigger height.** Re-issue `G31` immediately
   after any `M558`, in that order — as `G31 P500 X0 Y0 Z{global.trigZ}`: since 25/09/2026
