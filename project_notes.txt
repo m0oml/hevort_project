@@ -926,6 +926,13 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   persists and printend.g does not clear it. The adaptive mesh's "[START] ... mean
   ..mm, deviation ..mm" log line is a free per-print thermal-state signal to log
   against each material's tuned offset meanwhile.
+- PURGE LINE X (26/09/2026): the purge X was a fixed 10, only Y followed the part.
+  printstart.g now starts the line at the part's left edge: purgeX = min(max(L,10),340),
+  so the 30mm line + 20mm wipe end by X390; Y logic unchanged (6mm in front, or
+  behind when the part is near the front edge); no footprint keeps X10. The line now
+  lies inside the mesh margin, so the mesh compensates it. Expression tested with no
+  motion (L185 -> 185, L5 -> 10, L380 -> 340, none -> 10); the full purge move has
+  NOT yet run - watch the first print. Backup ~/printstart.g.bak-20260926-pre-purgex.
 - M290 CHECK 25/09/2026: R0 = absolute, positive raises the head. M290 R0 S0.10 at
   Z20 moved machinePosition 20.000 -> 20.100 with userPosition unchanged, cleared
   back to 20.000. The heighttest sweep offsets DO physically move the nozzle.
