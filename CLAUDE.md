@@ -233,8 +233,8 @@ full mechanism and why the expiry exists.
 
 ### Not committed
 
-`hevort_config` excludes `sys/heightmap.csv` (the working copy RRF recalls from
-the named `heightmap_bed*_ch*.csv` maps) and the capture directories RRF creates
+`hevort_config` excludes `sys/heightmap.csv` (scratch output, rewritten by every
+per-print mesh) and the capture directories RRF creates
 on demand, `sys/accelerometer/` and `sys/closed-loop/` — those are output, not
 config. Captures are renamed and copied across into `survey_data/` here, where
 the project watcher picks them up.
@@ -292,8 +292,9 @@ no passphrase, which is what lets the watchers run unattended.
   is what a real print does — capture it there and label by SETPOINT.
 - **The chamber sets the bed's shape, not the bed.** Same bed, chamber off vs 65:
   106µm rms. Same chamber, 20°C of bed: 34µm. Any door-open map against any
-  door-shut map is 106–182µm apart. `printstart.g` tests `param.C` before
-  `param.B` for this reason — see THERMAL MAP SET in project_notes.txt.
+  door-shut map is 106–182µm apart. `printstart.g` used to pick a stored map by chamber
+  then bed for this reason; those maps were retired 26/09/2026 (it meshes each print
+  now) — see THERMAL MAP SET in project_notes.txt.
 - The ALPS probe historically could not complete more than ~21–25 points in a hot
   chamber. A 7x7 completed at 60°C on 29/08/2026 after `deployprobe.g` was changed
   to cycle the enable. On 16/09/2026 the retry fired twice: once before the

@@ -949,6 +949,10 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   ~/mesh.g.bak-20260925-pre-adaptive, ~/config.g.bak-20260925-pre-adaptive.
 
 THERMAL MAP SET, 18-19/09/2026 - FIVE MAPS, ONE PER PRINTING CONDITION
+[RETIRED 26/09/2026: printstart.g now meshes every print at its own thermal state. The five
+ files were copied to survey_data/thermal_map_set_20260919/ (sha256-verified) and deleted from
+ /opt/dsf/sd/sys/ (still in hevort_config git history, initial commit 9424f78). Everything
+ below is the record of how they were made and what they showed; nothing loads them now.]
 The bed's shape is driven by the CHAMBER far more than by bed temperature, so
 maps are per (bed, chamber) pair, not per bed temperature. Every pair below is
 two meshes with M18 between; "pair" figures are m1 vs m2, de-meaned.
