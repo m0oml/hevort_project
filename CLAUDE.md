@@ -269,8 +269,8 @@ no passphrase, which is what lets the watchers run unattended.
 - **`M558` silently wipes the `G31` trigger height.** Re-issue `G31` immediately
   after any `M558`, in that order — as `G31 P500 X0 Y0 Z{global.trigZ}`: since 25/09/2026
   the trigger height lives in ONE place, `global.trigZ` in `config.g` (read by
-  config.g, mesh.g and printstart.g). Verify `triggerHeight` is `-0.264` (was
-  -0.134 until 24/09/2026 — see below). A live `set global.trigZ` is RAM-only.
+  config.g, mesh.g and printstart.g). Verify `triggerHeight` is `-0.234` (was
+  -0.134 until 24/09/2026, -0.264 until 26/09/2026 — see below). A live `set global.trigZ` is RAM-only.
 - `G30 S-1` reports the **raw** trigger height; `G29` stores it with `G31 Z`
   already subtracted. Comparing them looks like a 0.7mm fault and isn't.
 - RRF heightmap **row 0 = Ymin = FRONT**. Positive = bed high = gantry sits low.
@@ -306,7 +306,9 @@ no passphrase, which is what lets the watchers run unattended.
   at 150C hotend. Superseded 18/09/2026 by printed squish sweeps: Z-0.134. Then 24/09/2026:
   two-pass heighttest (M290 babystep per object) still too close, best object
   +0.13 -> Z-0.264 in config.g:77 AND mesh.g:58. Confirmed live after M999,
-  triggerHeight read back -0.264 (24/09/2026).
+  triggerHeight read back -0.264 (24/09/2026). Then 26/09/2026 -> -0.234: the first
+  per-print-mesh print was a little too high, because -0.264 had been tuned against
+  a stored map that read the bed ~0.03 low (pulling the nozzle too close).
   The slip gauge reads the GAP; the gauge triggers on FORCE, after the nozzle
   has loaded the bed — so it measures high. Trust the printed first layer.
   The first sweep gave -0.170, but that was run against `heightmap_bed100_ch60.csv`
