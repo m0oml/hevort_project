@@ -940,8 +940,11 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   saved as /opt/dsf/conf/config.json.dpkg-dist). 'Expansion board 70/71/72 stopped sending
   status' errors 19:59-20:02 were the flash window only. rc.2 breaking changes checked:
   all M956 already pass P0, nothing reads boards[].accelerometer, no M23CL board-temp
-  M308. NOT yet applied: anchored NumLayersFilters + new ObjectHeightFilters from
-  config.json.dpkg-dist (layer-count fix for preFlight files).
+  M308. APPLIED 26/09/2026 after the upgrade: the anchored NumLayersFilters from
+  config.json.dpkg-dist (the one release-notes item; backup ~/config.json.bak-20260926-pre-numlayers;
+  DCS restarted while idle, back in ~2s). ObjectHeightFilters deliberately NOT adopted - not in
+  the release notes. DSF already parsed our layer counts correctly before the change (12 and 14),
+  so there is no visible difference; it just matches upstream.
 - M290 CHECK 25/09/2026: R0 = absolute, positive raises the head. M290 R0 S0.10 at
   Z20 moved machinePosition 20.000 -> 20.100 with userPosition unchanged, cleared
   back to 20.000. The heighttest sweep offsets DO physically move the nozzle.
