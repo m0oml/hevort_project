@@ -233,3 +233,15 @@ Building it — the traps:
   libepoxy-dev libfontconfig-dev.
 - The binary has RUNPATH `$ORIGIN/../python/lib` and finds `../resources`, so
   `src/preflight` + `python/` + `resources/` is a relocatable unit.
+
+## First-layer line width 120% -> 130% (26/09/2026)
+
+Widths are percentages of the 0.6 nozzle and are identical across the 0.20/0.25/0.30
+profiles (only layer height differs); first layer is a fixed 0.3mm in all three.
+Bumped ONLY the first-layer width, 0.72 -> 0.78mm, on the 0.20/0.25/0.30 profiles in
+BOTH slicers (preFlight `first_layer_extrusion_width`, Orca `initial_layer_line_width`).
+External 0.66, perimeters 0.72, solid infill 0.66, top 0.60 unchanged; the 0.35mm
+profile was NOT touched. preFlight infill is 0.75mm but Orca's is 0.69mm (a standing
+mismatch), and Orca's ABS volumetric cap is 20 mm3/s vs preFlight's 40.
+A wider first layer at the same nozzle height squishes more, so the G31 height tuning
+(global.trigZ, currently -0.174) may want a small nudge once this has been printed.
