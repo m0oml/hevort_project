@@ -918,6 +918,12 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   live. Backup ~/config.g.bak-20260926-pre-trig234. Nudge live with `set global.trigZ`
   (printstart re-issues G31 from it before the final datum) in 0.01-0.02 steps, then
   write the final value into config.g.
+- LATER (Trev, 26/09/2026): the offset drifts with thermal state, so it belongs per
+  FILAMENT, not as one global. Idea: optional param O on the printstart.g call, filled
+  from a per-filament slicer value; G31 Z = global.trigZ - O. NOT M290 babystep - it
+  persists and printend.g does not clear it. The adaptive mesh's "[START] ... mean
+  ..mm, deviation ..mm" log line is a free per-print thermal-state signal to log
+  against each material's tuned offset meanwhile.
 - M290 CHECK 25/09/2026: R0 = absolute, positive raises the head. M290 R0 S0.10 at
   Z20 moved machinePosition 20.000 -> 20.100 with userPosition unchanged, cleared
   back to 20.000. The heighttest sweep offsets DO physically move the nozzle.
