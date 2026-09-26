@@ -287,7 +287,7 @@ One line each. Detail in project-long.txt under the named section.
   condition (chamber first, then bed). printstart.g branches on it. See
   THERMAL MAP SET below. [PRINT CALIBRATION]
 - SQUISH, FLOW AND PA CALIBRATED 18-19/09/2026 for ABS, in Ellis Print Tuning
-  Guide order: G31 Z-0.234 (26/09; -0.264 on 24/09), EM 0.97 (21/09), PA 0.02 (21/09). All by printed test, not by
+  Guide order: G31 Z-0.204 (26/09; -0.264 on 24/09), EM 0.97 (21/09), PA 0.02 (21/09). All by printed test, not by
   slip gauge or by eye. See PRINT CALIBRATION below. [PRINT CALIBRATION]
 - EXTRUDER MOTION LIMITS raised and made self-consistent 19/09/2026: M201
   E2000, M203 E6000, M566 E3600, tied together by the PA formula. See
@@ -578,11 +578,12 @@ IO4 are free, with IO3 reserved for a runout sensor.
 ---------------------------------------------------------------------------  
 - Continuity testing of the umbilical.  
 - ALPS probe: the P5-vs-P9 question is RESOLVED - config.g line 76 is P9. The  
-  trigger height is set and derived, G31 Z-0.234 via global.trigZ (config.g) -
+  trigger height is set and derived, G31 Z-0.204 via global.trigZ (config.g) -
   SET 26/09/2026. History: -0.030 (21/08 slip gauge), -0.050 (17/09), -0.134
   (19/09 printed sweep), -0.264 (24/09 two-pass heighttest, best object +0.13, tuned
   against the stored map), -0.234 (26/09, first per-print-mesh print a little too
-  high; the old map had been pulling the nozzle ~0.03 low).
+  high; the old map had been pulling the nozzle ~0.03 low),
+  -0.204 (26/09, the same 0.03 step again - still too high).
   See PRINT CALIBRATION above; the gauge measures the GAP, the probe triggers
   on FORCE, so the slip-gauge number was always going to read high. The XY
   offsets are X0 Y0 and that is CORRECT, not a placeholder - the ALPS is a  
@@ -856,7 +857,7 @@ line-numbered contents at the top, photographs NOT included - it is a lynx dump)
 Ellis' order is extruder -> squish -> PA -> EM. Retraction last, and he says the
 tower method is usually unnecessary: direct drive starts 0.5mm @ 35mm/s, stay
 under 1mm. We are at 0.5 @ 40/30.
-- G31 Z-0.134 (now -0.234, 26/09/2026 - see SQUISH note above), set by PRINTED
+- G31 Z-0.134 (now -0.204, 26/09/2026 - see SQUISH note above), set by PRINTED
   SQUISH SWEEPS, not by slip gauge. The gauge reads
   the GAP; the probe triggers on FORCE after the nozzle has loaded the bed, so
   it measures high - 17/09's slip-gauge -0.050 was 84um out.
@@ -914,8 +915,8 @@ ADAPTIVE PER-PRINT MESH, 25/09/2026 - printstart.g meshes the bed itself
   ~30um too close here - about a quarter of the 0.13mm G31 drift, the rest still
   unexplained. First-layer verdict on that print: pending Trev.
 - 26/09/2026: first-layer verdict on the Shape-Box print was "a little too far from
-  the bed". global.trigZ -0.264 -> -0.234 (+0.03 toward the bed), in config.g and
-  live. Backup ~/config.g.bak-20260926-pre-trig234. Nudge live with `set global.trigZ`
+  the bed". global.trigZ -0.264 -> -0.234 (+0.03 toward the bed), then -0.204 after the
+  second print (same step again), in config.g and live. Backup ~/config.g.bak-20260926-pre-trig234. Nudge live with `set global.trigZ`
   (printstart re-issues G31 from it before the final datum) in 0.01-0.02 steps, then
   write the final value into config.g.
 - LATER (Trev, 26/09/2026): the offset drifts with thermal state, so it belongs per
