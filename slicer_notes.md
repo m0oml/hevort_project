@@ -245,3 +245,26 @@ profile was NOT touched. preFlight infill is 0.75mm but Orca's is 0.69mm (a stan
 mismatch), and Orca's ABS volumetric cap is 20 mm3/s vs preFlight's 40.
 A wider first layer at the same nozzle height squishes more, so the G31 height tuning
 (global.trigZ, currently -0.174) may want a small nudge once this has been printed.
+
+## First-layer flow +3% for ABS, and trev-pc profile sync (26/09/2026)
+
+Height is right at `global.trigZ` -0.174; a small amount of first-layer gapping remained.
+Widening the first layer does NOT cure gapping (line spacing and material per mm both
+scale with width, so fill per area is unchanged) - flow does. So:
+- ABS filament start G-code (both slicers) now ends with `M221 S103` (+3% on top of the
+  0.97 extrusion multiplier, i.e. ~1.00 effective on the first layer).
+- Reset to `M221 S100` at layer 2: preFlight printer profile `layer_gcode` /
+  Orca machine `layer_change_gcode`, guarded by `{if layer_num == 1}`. It has to be the
+  filament start G-code, not layer_gcode, that raises it: **the first layer's
+  layer_gcode is not emitted** (checked in 1.4.0 output; layers 2+ have it).
+- To nudge: change the number in `M221 S103` in the ABS filament profile only (S105 = +5%).
+  Other filaments are untouched (their layer-2 `M221 S100` is a no-op).
+- If a print is cancelled during the first layer, +3% persists until the next print's
+  first-layer reset (or `M221 S100`). Untested in Orca itself (JSON validated only).
+
+trev-pc: the 14 HevORT presets (printer, 4 print, 8 filament, physical printer) were
+copied to `~/.config/preFlight` there and are sha256-identical to this machine; slicing
+from the installed copies gives byte-identical G-code here and there. NOT copied:
+`preFlight.ini` (per-machine GUI state) and the other printer's presets. By-name CLI
+slicing on trev-pc needs that app config, which the GUI creates on first launch; until
+then use `--load` with the explicit ini paths.
