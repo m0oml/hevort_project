@@ -29,7 +29,8 @@ Two machines now. Keep them straight.
   survey_data/       heightmaps, accelerometer captures, thermal series
   archived_project_20260919/  pre-merge project.txt + project-long.txt
   preFlight/         unbuilt checkout from the Pi — NOT the one you build
-~/preFlight/         the real preFlight source + build tree (13G)
+~/preFlight-1.4.0-run/  ACTIVE preFlight 1.4.0 (built on trev-pc 26/09/2026)
+~/preFlight/         v1.3.0 source + build tree (13G), kept for rollback (`preflight-1.3.0`)
 ~/.config/preFlight/ LIVE slicer presets — see slicer_notes.md
 ```
 
