@@ -284,8 +284,39 @@ Separate issue, not yet fixed: preFlight's own "Detected unsupported geometry"
 warning on wide bridges is `dont_support_bridges = 1` (see 28/09 discussion) -
 this doesn't address span/sag, only the angled-miss adhesion problem.
 
-NOT yet copied to trev-pc - DNS failed to resolve the host when attempted
-(transient, not investigated further). Not applied in Orca: no
+Copied to trev-pc 28/09/2026 (delayed by the DNS issue below), sha256-verified
+identical. Not applied in Orca: no
 `bridge_infill_overlap`-equivalent key exists in the Orca HevORT process
 profiles (only `infill_wall_overlap`, a different setting - wall/infill, not
 bridge-specific); whatever Orca inherits from its base template was left alone.
+
+
+## `trev-pc` hostname resolution and Wake-on-LAN (28/09/2026)
+
+`ssh trev-pc` failed intermittently with "Could not resolve hostname" - not a network
+fault, `getent hosts trev-pc` resolves it via **mDNS** to a link-local IPv6 address
+(`nsswitch.conf`: `mdns4_minimal`), which needs `avahi-daemon` on trev-pc to be up and
+announcing. Right at wake-from-sleep or right after power-on it hasn't yet - it settled
+within under a minute both times. If `ssh trev-pc` fails, retry after a short wait, or
+use the IP `192.168.32.6` directly with `-i ~/.ssh/id_ed25519_garagepc` (the `Host
+trev-pc` block in `~/.ssh/config` sets that identity file only for the *name*, not the
+bare IP).
+
+trev-pc was regularly asleep/off. WoL now set up end to end:
+- **BIOS** (ASUS, Advanced > APM Configuration): `Power On By PCI-E` was Disabled -
+  this is the actual WoL toggle on this board despite the generic label (onboard NIC
+  sits on PCIe). Now Enabled. `ErP Ready` correctly left Disabled - enabling it would
+  have switched off every other PME wake option including this one. `Network Stack`
+  under Advanced is unrelated (UEFI PXE network boot) - not touched.
+- **NIC/driver**: `igb` (Intel), interface `enp14s0`, already reports `Wake-on: g`
+  (magic packet) at runtime with no extra config needed.
+- **Persistence**: that runtime setting isn't guaranteed to survive a reboot on its
+  own. This machine uses plain ifupdown (`/etc/network/interfaces`, DHCP), not
+  NetworkManager, so added `post-up /sbin/ethtool -s enp14s0 wol g` under the
+  `enp14s0` stanza. Backup: `~/interfaces.bak-20260928-pre-wol` on trev-pc. Validated
+  with `ifup --no-act` (no syntax error) but NOT tested through an actual reboot -
+  confirm after the next one.
+- **Sending it**: no `wakeonlan`/`etherwake` installed here; sent as a raw magic
+  packet via a short Python one-liner (MAC from the LAN ARP cache, broadcast to both
+  255.255.255.255 and the subnet-directed 192.168.32.255).
+- **MAC address**: `34:97:f6:5c:02:36`.
