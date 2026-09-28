@@ -314,8 +314,9 @@ trev-pc was regularly asleep/off. WoL now set up end to end:
   own. This machine uses plain ifupdown (`/etc/network/interfaces`, DHCP), not
   NetworkManager, so added `post-up /sbin/ethtool -s enp14s0 wol g` under the
   `enp14s0` stanza. Backup: `~/interfaces.bak-20260928-pre-wol` on trev-pc. Validated
-  with `ifup --no-act` (no syntax error) but NOT tested through an actual reboot -
-  confirm after the next one.
+  with `ifup --no-act` (no syntax error), then **confirmed live through a full
+  power-off 28/09/2026**: WoL packet sent, machine answered ping ~50s later,
+  `Wake-on: g` still set afterwards - the post-up hook works.
 - **Sending it**: no `wakeonlan`/`etherwake` installed here; sent as a raw magic
   packet via a short Python one-liner (MAC from the LAN ARP cache, broadcast to both
   255.255.255.255 and the subnet-directed 192.168.32.255).
