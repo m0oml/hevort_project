@@ -268,3 +268,24 @@ from the installed copies gives byte-identical G-code here and there. NOT copied
 `preFlight.ini` (per-machine GUI state) and the other printer's presets. By-name CLI
 slicing on trev-pc needs that app config, which the GUI creates on first launch; until
 then use `--load` with the explicit ini paths.
+
+## Bridge fill not reaching the wall at shallow angles (27/09/2026)
+
+Seen in preFlight's own preview: on a non-rectangular bridge opening, fill lines
+meeting the wall square-on anchored fine, but the same lines meeting it at a shallow
+angle (an acute corner of the opening) fell short - a zero-overlap line clipped at a
+glancing angle leaves a sliver too short to bond or to survive the slicer's own
+minimum-length filter. `bridge_infill_overlap` was 0% (separate from
+`bridge_infill_perimeter_overlap`, already 21.46%) - raised to **21%** to match,
+across all four print profiles (0.20/0.25/0.30/0.35), so every bridge line explicitly
+reaches into the wall regardless of the angle it meets it at.
+
+Separate issue, not yet fixed: preFlight's own "Detected unsupported geometry"
+warning on wide bridges is `dont_support_bridges = 1` (see 28/09 discussion) -
+this doesn't address span/sag, only the angled-miss adhesion problem.
+
+NOT yet copied to trev-pc - DNS failed to resolve the host when attempted
+(transient, not investigated further). Not applied in Orca: no
+`bridge_infill_overlap`-equivalent key exists in the Orca HevORT process
+profiles (only `infill_wall_overlap`, a different setting - wall/infill, not
+bridge-specific); whatever Orca inherits from its base template was left alone.
