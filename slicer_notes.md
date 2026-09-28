@@ -325,3 +325,21 @@ trev-pc was regularly asleep/off. WoL now set up end to end:
   packet via a short Python one-liner (MAC from the LAN ARP cache, broadcast to both
   255.255.255.255 and the subnet-directed 192.168.32.255).
 - **MAC address**: `34:97:f6:5c:02:36`.
+
+## Walls dropped to 2, new "Strong" profile added (28/09/2026)
+
+3 walls is the 0.4mm-nozzle convention. At this 0.6mm nozzle, 2 walls (1 external
+0.66mm + 1 internal 0.72mm = ~1.38mm) already exceeds the equivalent thickness of
+3 walls at 0.4mm (~1.2mm), so dropped `perimeters`/`wall_loops` 3 -> 2 across all
+four print profiles, both slicers.
+
+For load-bearing parts, added a separate **Strong** variant per layer height -
+`HevORT 0.20/0.25/0.30/0.35mm Strong` - 4 walls, 40% infill, everything else
+(speeds, widths, bridge settings, acceleration) copied from the matching base
+profile. **The two are not linked** - a future change to a base profile's speeds
+etc. needs manually repeating on its Strong twin, there is no inheritance wiring
+this together. Verified by slicing all 8: correct wall count and infill density
+on every one, in both preFlight and Orca.
+
+Synced to trev-pc: the 8 preFlight `.ini` files, sha256-verified identical. Orca's
+8 `.json` files are NOT copied there - Orca isn't set up on trev-pc yet.
