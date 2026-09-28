@@ -293,6 +293,10 @@ bridge-specific); whatever Orca inherits from its base template was left alone.
 
 ## `trev-pc` hostname resolution and Wake-on-LAN (28/09/2026)
 
+**Standing permission (28/09/2026): wake trev-pc via WoL whenever needed** for a
+profile sync or similar, unasked - it's expected to be asleep or off. MAC
+`34:97:f6:5c:02:36`, see below for how to send the packet and what to expect.
+
 `ssh trev-pc` failed intermittently with "Could not resolve hostname" - not a network
 fault, `getent hosts trev-pc` resolves it via **mDNS** to a link-local IPv6 address
 (`nsswitch.conf`: `mdns4_minimal`), which needs `avahi-daemon` on trev-pc to be up and
