@@ -3323,3 +3323,31 @@ daemon.g cannot be edited in place while RRF is running it - rename it (e.g.
 daem6on.g), edit, rename back. To reload it without resetting the board, use
 "sudo systemctl restart duetcontrolserver"; that is lighter than M999 when a
 macro is all you need reloaded.
+
+M307 "predicted maximum temperature" WARNING - Heater 1, 08/10/2026
+Warning: M307: Heater 1 predicted maximum temperature at full power is 760C
+(RRF reports 735C via M307 H1 report - close enough, probably rounding/ambient).
+Confirmed NOT from a fresh M303 autotune - these are the established config.g
+values (R5.147 K0.348:0.572 D2.53 E1.35, M143 H1 S365 A0), re-applied and
+re-checked by RRF every config.g run (so this fires on every M999/boot, not
+once).
+MATH: the Duet3D docs page literally reads "cooling rate = K/((Th-Ta)/100)^E"
+(verified identical in both lynx and links - not a tool rendering bug). Taken
+literally that predicts ~14C of rise, nowhere near what RRF itself reports.
+Taking it as MULTIPLICATION instead (K x ((Th-Ta)/100)^E, physically correct -
+cooling rate should rise with delta-T, not fall) gives ~685-710C, which is
+close enough to RRF's own 735C to treat the doc's division sign as a
+transcription/rendering error upstream at Duet3D, not a reading mistake here.
+TRIGGER: 365 x 2 = 730, suspiciously close to the 735C reported - looks like
+RRF's sanity check is "predicted max at full power >= ~2x the M143 limit",
+not a fixed absolute threshold. Not confirmed against firmware source, just
+the arithmetic lining up.
+CONCLUSION: not a misconfiguration. A heater cartridge powerful enough to
+reach ~105C/s-class heating rate at 24V will mathematically extrapolate to
+very high theoretical steady states long before it could ever get there -
+M143 H1 (S365, A0, latching) is what actually stops a runaway, independent of
+this model. The warning is RRF's advisory that the *theoretical* ceiling sits
+a long way above the hard limit it will actually enforce; it does not block
+heating or printing. No explicit suppress flag found in gcodes.txt. Re-tuning
+would only be worthwhile if the model's R/K/D themselves are suspected wrong
+- not indicated here, since nothing else about heater 1's behaviour looks off.
