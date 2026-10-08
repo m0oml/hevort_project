@@ -66,10 +66,13 @@ is deliberately NOT committed — it is a local convenience copy of documentatio
 that is public on the Duet3D site, so `.gitignore` excludes it rather than
 republishing someone else's docs. Do not "restore" it to `sys/`.
 
-Last refreshed 15/09/2026. To refresh it, back up the old copy and run:
+Last refreshed 08/10/2026, with `links` instead of `lynx` - both render the
+M307 cooling-rate formula identically (`K/((Th-Ta)/100)^E`), so that wasn't a
+tool artifact; the page's own wording looks wrong against RRF's actual output
+(see project_notes.txt). To refresh it, back up the old copy and run:
 
 ```bash
-lynx -dump -nolist -width=80 https://docs.duet3d.com/User_manual/Reference/Gcodes > ~/hevort_project/gcodes.txt
+links -dump -width 80 https://docs.duet3d.com/User_manual/Reference/Gcodes > ~/hevort_project/gcodes.txt
 ```
 
 ## Sending G-code — over SSH
