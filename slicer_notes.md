@@ -9,8 +9,8 @@ point back here.
 ## Which slicer
 
 The HevORT is sliced in **preFlight** — preflight3d.com, a PrusaSlicer fork,
-built from source, **v1.4.0** (`7561ccf`, installed 26/09/2026; was 1.3.0 `f74dc69`).
-Not OrcaSlicer.
+built from source, **v1.4.1** (`db7ae92`, installed 11/10/2026; was
+1.4.0 `7561ccf` 26/09/2026, 1.3.0 `f74dc69` before that). Not OrcaSlicer.
 
 OrcaSlicer 2.4.2 is installed as well but drives Trev's *other* machines (Voron,
 Saladfork). A request for "a slicer profile" on this machine is ambiguous and has
@@ -22,8 +22,8 @@ Slicing happens entirely on this workstation. The Pi has no slicer, no presets
 and no source (verified 19/09/2026).
 
 ```
-~/preFlight-1.4.0-run/        ACTIVE preFlight 1.4.0 (src/preflight + python/ + resources/, 420M)
-~/.local/bin/preflight        -> ~/preFlight-1.4.0-run/src/preflight
+~/preFlight-1.4.1-run/        ACTIVE preFlight 1.4.1 (src/preflight + python/ + resources/, 421M)
+~/.local/bin/preflight        -> ~/preFlight-1.4.1-run/src/preflight
 ~/.local/bin/preflight-1.3.0  -> ~/preFlight/build/src/preflight   (rollback)
 ~/preFlight/                  v1.3.0 source + build tree (13G) - old, kept for rollback
 ~/.config/preFlight/          LIVE presets — the single source of truth
@@ -343,3 +343,46 @@ on every one, in both preFlight and Orca.
 
 Synced to trev-pc: the 8 preFlight `.ini` files, sha256-verified identical. Orca's
 8 `.json` files are NOT copied there - Orca isn't set up on trev-pc yet.
+
+
+## preFlight 1.4.1 build, and trev-pc's toolchain drift (11/10/2026)
+
+One commit since 1.4.0 - no Luminary engine changes, confirmed by slicing the
+same test cube on both: byte-identical G-code except the timestamp line.
+Mostly preview/rendering fixes (large-file pan/zoom, MSAA actually works now).
+
+**trev-pc had drifted since the 1.4.0 build** (26/09) via routine `apt upgrade`
+- GCC 14.2 -> 16.2, CMake 3.31 -> 4.3 - and that broke the build in ways
+unrelated to preFlight itself:
+- GCC 16 is stricter: TBB (a bundled dependency) hit `-Werror=stringop-overflow`
+  in `<bits/atomic_base.h>` and failed to compile outright.
+- Renaming the checkout dir (`preFlight-1.4.0` -> `preFlight-1.4.1`, done to keep
+  the old one for rollback, same pattern as 1.3.0) broke things that bake in
+  absolute build paths: `deps/build/.DEPS_PATH.txt`, and `wx-config` itself is a
+  SYMLINK whose target string includes the build path. CMake's own cache
+  (`build/CMakeCache.txt`) breaks the same way. **Lesson: don't rename a
+  preFlight checkout after `build_deps.sh` has run - clone fresh under the final
+  name, or always `-deps -clean` after any rename.**
+- Fixed by pinning both toolchains LOCALLY, without touching the system
+  packages (same approach as the python3.14 pin for the version jump):
+  `~/.local/gcc14-bin/{gcc,g++,cc,c++}` -> symlinks to `/usr/bin/gcc-14`/`g++-14`
+  (`sudo apt install g++-14` first - `gcc-14` alone was already present,
+  `g++-14` wasn't), and `~/.local/cmake-3.31.6/` - a portable binary release
+  from Kitware's GitHub, since Debian only ships 4.x now. Both prepended to
+  PATH ahead of the system versions for the build only.
+  CC/CXX environment variables alone were NOT enough - each dependency's
+  `ExternalProject_Add` runs its own independent `cmake` configure that
+  auto-detects a compiler fresh, and doesn't reliably inherit the outer shell's
+  CC/CXX. Putting the pinned compilers on PATH under the plain `gcc`/`g++` names
+  is what actually makes every nested sub-build pick them up consistently.
+- **Self-inflicted failure, for the record**: deleted `deps/build-default`
+  while an earlier build attempt was still actively compiling into it, which
+  produced a tree-wide "No such file or directory" cascade across every OCCT
+  source file that looked like severe corruption but was just yanking the rug
+  out from under a live process. Always confirm nothing is running
+  (`pgrep -af "build.sh|cc1plus|gmake|cmake|ninja"`) before wiping a build dir.
+
+Verified after: 1.4.1 launches on both machines, `ldd` resolves cleanly, output
+matches 1.4.0 byte-for-byte on the test cube. Old `preFlight-1.4.0-run` removed
+from here; the pinned toolchains were left in place on trev-pc rather than
+removed, since the next version bump will need them again.
